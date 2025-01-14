@@ -10,8 +10,13 @@ namespace SportsScheduleProLibrary
         public bool IsDeleted { get; set; }
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
-        public List<DayOfWeek> AvailableDaysOfWeek { get; set; } = new List<DayOfWeek> { DayOfWeek.Friday, DayOfWeek.Monday, DayOfWeek.Saturday, DayOfWeek.Thursday, DayOfWeek.Tuesday, DayOfWeek.Wednesday };
-
+        public bool IsOpenSunday { get; set; }
+        public bool IsOpenMonday { get; set; }
+        public bool IsOpenTuesday { get; set; }
+        public bool IsOpenWednesday { get; set; }
+        public bool IsOpenThursday { get; set; }
+        public bool IsOpenFriday { get; set; }
+        public bool IsOpenSaturday { get; set; }
 
         //Relationships
         public Club Club { get; set; }

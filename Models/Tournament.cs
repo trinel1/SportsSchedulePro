@@ -6,12 +6,10 @@ namespace SportsScheduleProLibrary
 {
     public class Tournament
     {
-        public int SeasonId { get; set; }
+        public int TournamentId { get; set; }
         public bool IsDeleted { get; set; }
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
-        public List<DayOfWeek> AvailableDaysOfWeek { get; set; } = new List<DayOfWeek> { DayOfWeek.Friday, DayOfWeek.Monday, DayOfWeek.Saturday, DayOfWeek.Thursday, DayOfWeek.Tuesday, DayOfWeek.Wednesday };
-
 
         //Relationships
         public Club Club { get; set; }

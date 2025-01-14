@@ -6,7 +6,7 @@ namespace SportsScheduleProLibrary
 {
     public class Team
     {
-        public int Id { get; set; }
+        public int TeamId { get; set; }
         public bool IsDeleted { get; set; }
         public string Name { get; set; }
         public string ShirtColorChosen { get; set; }

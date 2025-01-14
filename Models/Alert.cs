@@ -4,7 +4,7 @@ using System.Text;
 
 namespace SportsScheduleProLibrary
 {
-    class Alert
+    public class Alert
     {
         public int AlertId { get; set; }
         public bool IsDeleted { get; set; }

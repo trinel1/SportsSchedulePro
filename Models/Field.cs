@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SportsScheduleProLibrary.Data;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -9,7 +10,15 @@ namespace SportsScheduleProLibrary
         public int FieldId { get; set; }
         public bool IsDeleted { get; set; }
         public string Name { get; set; }
-        public List<DayOfWeek> AvailableDaysOfWeek { get; set; } = new List<DayOfWeek> { DayOfWeek.Friday, DayOfWeek.Monday, DayOfWeek.Saturday, DayOfWeek.Thursday, DayOfWeek.Tuesday, DayOfWeek.Wednesday };
+        public bool IsOpenSunday { get; set; }
+        public bool IsOpenMonday { get; set; }
+        public bool IsOpenTuesday { get; set; }
+        public bool IsOpenWednesday { get; set; }
+        public bool IsOpenThursday { get; set; }
+        public bool IsOpenFriday { get; set; }
+        public bool IsOpenSaturday { get; set; }
+
+
         public bool HasLights { get; set; }
         
         //Relationships
