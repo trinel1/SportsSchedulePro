@@ -2,15 +2,17 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SportsScheduleProLibrary.Data;
 
 namespace SportsScheduleProLibrary.Migrations
 {
     [DbContext(typeof(SportsScheduleProDataContext))]
-    partial class SportsScheduleProDataContextModelSnapshot : ModelSnapshot
+    [Migration("20250114055448_AlertDateFix")]
+    partial class AlertDateFix
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -82,17 +84,8 @@ namespace SportsScheduleProLibrary.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTime?>("AlertDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("AlertType")
-                        .HasColumnType("TEXT");
-
                     b.Property<int?>("ClubId")
                         .HasColumnType("INTEGER");
-
-                    b.Property<DateTime?>("EndDate")
-                        .HasColumnType("TEXT");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("INTEGER");
