@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace SportsScheduleProLibrary
+namespace SportsScheduleProLibrary.Models
 {
     public class League
     {
@@ -17,9 +17,10 @@ namespace SportsScheduleProLibrary
         public DateTime? EndDate { get; set; }
 
         //Relationships
-        public Club Club { get; set; }
         public List<Season> Seasons { get; set; } = new List<Season>();
         public List<Team> Teams { get; set; } = new List<Team>();
         public List<Field> Fields { get; set; } = new List<Field>();
+        public List<Referee> Referees { get; set; }
+        public Club Club { get; set; }
     }
 }

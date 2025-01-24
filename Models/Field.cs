@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace SportsScheduleProLibrary
+namespace SportsScheduleProLibrary.Models
 {
     public class Field
     {
@@ -23,7 +23,8 @@ namespace SportsScheduleProLibrary
         
         //Relationships
         public List<League> Leagues { get; set; } //This is the leagues that are using the fields.
-        public Club Club { get; set; } //The club that owns the field
         public Location Location { get; set; }
+        public List<Tournament> Tournaments { get; set; }
+        public Club Club { get; set; }
     }
 }

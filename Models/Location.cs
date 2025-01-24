@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace SportsScheduleProLibrary
+namespace SportsScheduleProLibrary.Models
 {
     public class Location
     {
@@ -18,8 +18,8 @@ namespace SportsScheduleProLibrary
         public bool IsOpenSaturday { get; set; }
 
         //Relationships
-        public List<League> Leagues { get; set; } //This is the leagues that are using the fields.
         public Club Club { get; set; } //The club that owns the field
         public List<Field> Fields { get; set; } = new List<Field>();
+        public List<Tournament> Tournaments { get; set; } = new List<Tournament>();
     }
 }

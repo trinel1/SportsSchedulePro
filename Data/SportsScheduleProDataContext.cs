@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
+using SportsScheduleProLibrary.Models;
 
 #nullable disable
 
@@ -49,6 +51,12 @@ namespace SportsScheduleProLibrary.Data
                 entity.HasMany(s => s.AlertContacts);
                 entity.HasOne(s => s.Club);
                 entity.HasQueryFilter(s => !s.IsDeleted);
+                entity.HasData(new Alert
+                {
+                    AlertId = 1,
+                    AlertDate = DateTime.Now,
+                    Message = "Weather alert - Fields will be closed due to inclement weather.",                    
+                });
             });
 
             builder.Entity<AlertContact>(entity =>
@@ -56,7 +64,32 @@ namespace SportsScheduleProLibrary.Data
                 entity.ToTable("AlertContact");
                 entity.HasKey(s => s.PersonId);
                 entity.HasMany(s => s.Players).WithMany(s => s.AlertContacts);
+                entity.HasMany(s => s.Alerts).WithMany(s => s.AlertContacts);
                 entity.HasQueryFilter(s => !s.IsDeleted);
+                entity.HasData(new AlertContact
+                {
+                    ContactEmail = "timothylindsay.ns1@gmail.com",
+                    ContactPhone = "3182451296",
+                    Name = "Timothy Lindsay",
+                    PreferredContactMethod = PreferredContactMethod.GroupMe,
+                    PersonId = 1
+                });
+            });
+
+            builder.Entity<Club>(entity =>
+            {
+                entity.ToTable("Club");
+                entity.HasKey(s => s.ClubId);
+                entity.HasQueryFilter(s => !s.IsDeleted);
+                entity.HasMany(s => s.Locations).WithOne(s => s.Club);
+                entity.HasMany(s => s.Fields).WithOne(s => s.Club);
+                entity.HasMany(s => s.Seasons).WithOne(s => s.Club);
+                entity.HasMany(s => s.Leagues).WithOne(s => s.Club);
+                entity.HasData(new Club
+                {
+                    Name = "NELSA",
+                    ClubId = 1
+                });
             });
 
             builder.Entity<Coach>(entity =>
@@ -64,6 +97,102 @@ namespace SportsScheduleProLibrary.Data
                 entity.ToTable("Coach");
                 entity.HasKey(s => s.PersonId);
                 entity.HasQueryFilter(s => !s.IsDeleted);
+                entity.HasMany(s => s.Players).WithMany(s => s.Coaches);
+                entity.HasMany(s => s.Teams).WithMany(s => s.Coaches);
+                entity.HasData(new List<Coach> 
+                {
+                    new Coach
+                    {
+                        ContactEmail = "timothylindsay.ns1@gmail.com",
+                        ContactPhone = "3182451296",
+                        Name = "Timothy Lindsay",
+                        PersonId = 1,
+                    },
+                    new Coach
+                    {                                               
+                        Name = "Doug Smith",
+                        PersonId = 2,
+                    } 
+                });
+            });
+
+            builder.Entity<Director>(entity =>
+            {
+                entity.ToTable("Director");
+                entity.HasKey(s => s.PersonId);
+                entity.HasQueryFilter(s => !s.IsDeleted);
+                entity.HasMany(s => s.Tournaments).WithOne(s => s.Director);
+                entity.HasOne(s => s.Club).WithMany(s => s.Directors);
+                entity.HasData(new Director
+                {
+                    Name = "Nick Artigue",
+                    PersonId = 1,
+                });
+            });
+
+            builder.Entity<Field>(entity =>
+            {
+                entity.ToTable("Field");
+                entity.HasKey(s => s.FieldId);
+                entity.HasQueryFilter(s => !s.IsDeleted);
+                entity.HasMany(s => s.Tournaments).WithMany(s => s.Fields);
+                entity.HasMany(s => s.Leagues).WithMany(s => s.Fields);
+                entity.HasOne(s => s.Location).WithMany(s => s.Fields);
+                entity.HasData(new Field
+                {
+                    Name = "NELSA",
+                    FieldId = 1,
+                    IsOpenFriday = true,
+                    IsOpenMonday = true,
+                    IsOpenSaturday = true,
+                    IsOpenSunday = true,
+                    IsOpenThursday = true,
+                    IsOpenTuesday = true,
+                    IsOpenWednesday = true,                  
+                });
+            });
+
+            builder.Entity<League>(entity =>
+            {
+                entity.ToTable("League");
+                entity.HasKey(s => s.LeagueId);
+                entity.HasQueryFilter(s => !s.IsDeleted);
+                entity.HasMany(s => s.Seasons).WithMany(s => s.Leagues);
+                entity.HasMany(s => s.Teams).WithOne(s => s.League);
+                entity.HasMany(s => s.Fields).WithMany(s => s.Leagues);
+                entity.HasOne(s => s.Club).WithMany(s => s.Leagues);
+                entity.HasData(new League
+                {
+                    AgeGroup = "9-10",
+                    AgeGroupEarliestDate = new DateTime(2015, 1, 1),
+                    AgeGroupLatestDate = new DateTime(2016, 12, 31),
+                    EndDate = new DateTime(2025,4,1),
+                    Gender = "Male",
+                    Name = "Smith/Lindsay",
+                    StartDate = new DateTime(2024, 9, 1),     
+                    LeagueId = 1
+                });
+            });
+
+            builder.Entity<Location>(entity =>
+            {
+                entity.ToTable("Location");
+                entity.HasKey(s => s.LocationId);
+                entity.HasQueryFilter(s => !s.IsDeleted);
+                entity.HasMany(s => s.Fields).WithOne(s => s.Location);
+                entity.HasOne(s => s.Club).WithMany(s => s.Locations);
+                entity.HasData(new Location
+                {
+                    IsOpenFriday = true,
+                    IsOpenMonday = true,
+                    IsOpenSaturday = true,
+                    IsOpenSunday = true,
+                    IsOpenThursday = true,
+                    IsOpenTuesday = true,
+                    IsOpenWednesday = true,
+                    Name = "NELSA (Chennault)",
+                    LocationId = 1,
+                });
             });
 
             builder.Entity<Player>(entity =>
@@ -71,6 +200,16 @@ namespace SportsScheduleProLibrary.Data
                 entity.ToTable("Player");
                 entity.HasKey(s => s.PersonId);
                 entity.HasQueryFilter(s => !s.IsDeleted);
+                entity.HasMany(s => s.Coaches).WithMany(s => s.Players);
+                entity.HasMany(s => s.AlertContacts).WithMany(s => s.Players);
+                entity.HasMany(s => s.Teams).WithMany(s => s.Players);
+                entity.HasData(new Player
+                {
+                    Name = "Micah Lindsay",
+                    PersonId = 1,
+                    ContactEmail = "timothylindsay.ns1@gmail.com",
+                    ContactPhone = "3182451296",
+                });
             });
 
             builder.Entity<Referee>(entity =>
@@ -78,6 +217,48 @@ namespace SportsScheduleProLibrary.Data
                 entity.ToTable("Referee");
                 entity.HasKey(s => s.PersonId);
                 entity.HasQueryFilter(s => !s.IsDeleted);
+                entity.HasMany(s => s.Seasons).WithMany(s => s.Referees);
+                entity.HasMany(s => s.Leagues).WithMany(s => s.Referees);
+            });
+
+            builder.Entity<Season>(entity =>
+            {
+                entity.ToTable("Season");
+                entity.HasKey(s => s.SeasonId);
+                entity.HasQueryFilter(s => !s.IsDeleted);
+                entity.HasOne(s => s.Club).WithMany(s => s.Seasons);
+                entity.HasMany(s => s.Leagues).WithMany(s => s.Seasons);
+                entity.HasMany(s => s.Referees).WithMany(s => s.Seasons);
+                entity.HasData(new Player
+                {
+                    Name = "Micah Lindsay",
+                    PersonId = 1,
+                    ContactEmail = "timothylindsay.ns1@gmail.com",
+                    ContactPhone = "3182451296",
+                });
+            });
+
+            builder.Entity<Team>(entity =>
+            {
+                entity.ToTable("Team");
+                entity.HasKey(s => s.TeamId);
+                entity.HasQueryFilter(s => !s.IsDeleted);
+                entity.HasOne(s => s.League).WithMany(s => s.Teams);
+                entity.HasMany(s => s.Seasons).WithMany(s => s.Teams);
+                entity.HasMany(s => s.Players).WithMany(s => s.Teams);
+                entity.HasMany(s => s.Coaches).WithMany(s => s.Teams);
+                entity.HasMany(s => s.Tournaments).WithMany(s => s.Teams);
+
+            });
+
+            builder.Entity<Tournament>(entity =>
+            {
+                entity.ToTable("Tournament");
+                entity.HasKey(s => s.TournamentId);
+                entity.HasQueryFilter(s => !s.IsDeleted);
+                entity.HasMany(s => s.Fields).WithMany(s => s.Tournaments);
+                entity.HasMany(s => s.Teams).WithMany(s => s.Tournaments);
+                entity.HasOne(s => s.Location).WithMany(s => s.Tournaments);
             });
         }
 

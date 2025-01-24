@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace SportsScheduleProLibrary
+namespace SportsScheduleProLibrary.Models
 {
     public class Referee : Person
     {
-        public Season Season { get; set; }
-        public League League { get; set; }
+        public List<Season> Seasons { get; set; }
+        public List<League> Leagues { get; set; }
     }
 }

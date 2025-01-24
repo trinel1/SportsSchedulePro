@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace SportsScheduleProLibrary
+namespace SportsScheduleProLibrary.Models
 {
     public class Season
     {
@@ -21,6 +21,8 @@ namespace SportsScheduleProLibrary
         //Relationships
         public Club Club { get; set; }
         public List<League> Leagues { get; set; }
+        public List<Referee> Referees { get; set; }
+        public List<Team> Teams { get; set; }
 
     }
 }
