@@ -168,7 +168,7 @@ namespace SportsScheduleProLibrary.Data
                     AgeGroupLatestDate = new DateTime(2016, 12, 31),
                     EndDate = new DateTime(2025,4,1),
                     Gender = "Male",
-                    Name = "Smith/Lindsay",
+                    Name = "2015-2016 Boys Recreational",
                     StartDate = new DateTime(2024, 9, 1),     
                     LeagueId = 1
                 });
@@ -229,12 +229,18 @@ namespace SportsScheduleProLibrary.Data
                 entity.HasOne(s => s.Club).WithMany(s => s.Seasons);
                 entity.HasMany(s => s.Leagues).WithMany(s => s.Seasons);
                 entity.HasMany(s => s.Referees).WithMany(s => s.Seasons);
-                entity.HasData(new Player
+                entity.HasData(new Season
                 {
-                    Name = "Micah Lindsay",
-                    PersonId = 1,
-                    ContactEmail = "timothylindsay.ns1@gmail.com",
-                    ContactPhone = "3182451296",
+                    EndDate = new DateTime(2025, 4, 1),
+                    IsOpenFriday = true,
+                    IsOpenMonday = true,
+                    IsOpenSaturday = true,
+                    IsOpenSunday = true,
+                    IsOpenThursday = true,
+                    IsOpenTuesday = true,
+                    IsOpenWednesday = true,
+                    StartDate = new DateTime(2025,2,17),
+                    SeasonId = 1
                 });
             });
 
@@ -248,7 +254,13 @@ namespace SportsScheduleProLibrary.Data
                 entity.HasMany(s => s.Players).WithMany(s => s.Teams);
                 entity.HasMany(s => s.Coaches).WithMany(s => s.Teams);
                 entity.HasMany(s => s.Tournaments).WithMany(s => s.Teams);
-
+                entity.HasData(new Team
+                {
+                    Name = "Smith/Lindsay",
+                    TeamId = 1,
+                    ShirtColorChosen = "Navy Striped",
+                    ShortsColorChosen = "Black",
+                });
             });
 
             builder.Entity<Tournament>(entity =>
@@ -259,6 +271,13 @@ namespace SportsScheduleProLibrary.Data
                 entity.HasMany(s => s.Fields).WithMany(s => s.Tournaments);
                 entity.HasMany(s => s.Teams).WithMany(s => s.Tournaments);
                 entity.HasOne(s => s.Location).WithMany(s => s.Tournaments);
+                entity.HasData(new Tournament
+                {
+                    TournamentName = "End of Season Recreational",
+                    TournamentId = 1,
+                    EndDate = new DateTime(2025, 4, 1),
+                    StartDate = new DateTime(2025 ,4 ,1),
+                });
             });
         }
 
