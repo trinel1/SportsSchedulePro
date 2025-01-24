@@ -189,7 +189,7 @@ namespace SportsScheduleProLibrary.Data
                     EarliestGameTimeMinuteSaturday = 0,
                     EarliestGameTimeHourSunday = 13,
                     EarliestGameTimeMinuteSunday = 0,
-                    EarliestGameTimeHourWeekday = 5,
+                    EarliestGameTimeHourWeekday = 17,
                     EarliestGameTimeMinuteWeekday = 45,
                     PlayEachTimeCount = 1,
                     DailyGamesPerFieldSaturday = 3,

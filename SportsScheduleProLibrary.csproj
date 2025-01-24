@@ -17,6 +17,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="SportsScheduleProData.db">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="sqlite3.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

@@ -4,26 +4,27 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Microsoft.EntityFrameworkCore;
 
 namespace SportsScheduleProLibrary.Services
 {
     public class RandomScheduleService
     {
-        public static List<string> DayOfWeekPreference = new List<string>
+        public static List<DayOfWeek> DayOfWeekPreference = new List<DayOfWeek>
         {
-            "Saturday", "Tuesday", "Thursday", "Monday", "Wednesday", "Sunday", "Friday"
+            DayOfWeek.Saturday, DayOfWeek.Tuesday, DayOfWeek.Thursday, DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Sunday, DayOfWeek.Friday
         };
 
         public static List<Game> GameSchedule(League league = null, Season season = null, Club club = null)
         {
 
             SportsScheduleProDataContext dbc = new SportsScheduleProDataContext();
-            List<Club> clubs = dbc.Clubs.ToList();
-            List<Game> games = new List<Game>();
+            List<Club> clubs = dbc.Clubs.Include(s => s.Leagues).ThenInclude(s => s.Fields).Include(s => s.Seasons).Include(s => s.Leagues).ThenInclude(s => s.Teams).ToList();
+            List<Game> games = dbc.Games.ToList();
 
             foreach (Club c in clubs)
             {
-                List<League> leagues = c.Leagues;
+                List<League> leagues = c.Leagues.ToList();
                 if (league != null)
                     leagues = new List<League> { league };
 
@@ -33,6 +34,7 @@ namespace SportsScheduleProLibrary.Services
 
                     Random rng = new Random(Guid.NewGuid().GetHashCode() + Environment.TickCount);
                     List<Field> fieldsForLeague = l.Fields.OrderBy(_ => rng.Next()).ToList();
+                    Season currentLeagueSeason = c.Seasons.OrderByDescending(s => s.EndDate).FirstOrDefault();
 
                     //Generate list of possible times and places
                     if (l.StartDate == null || l.EndDate == null)
@@ -41,7 +43,7 @@ namespace SportsScheduleProLibrary.Services
                     {
                         foreach (Field f in fieldsForLeague)
                         {
-                            DateTime currentDate = l.StartDate ?? DateTime.Now;
+                            DateTime currentDate = currentLeagueSeason.StartDate ?? DateTime.Now;
                             while (currentDate < l.EndDate)
                             {
                                 if (currentDate.DayOfWeek == DayOfWeek.Saturday)
@@ -65,6 +67,7 @@ namespace SportsScheduleProLibrary.Services
                                         possibleUnfilteredTimeSlots.Add(new Tuple<Field, DateTime>(f, currentDate.AddHours(l.EarliestGameTimeHourWeekday).AddMinutes(l.EarliestGameTimeMinuteWeekday).AddMinutes(l.GameLengthWindow * x)));
                                     }
                                 }
+                                currentDate = currentDate.AddDays(1);
                             }
                         }
 
@@ -95,7 +98,15 @@ namespace SportsScheduleProLibrary.Services
                     }
 
                     games = games.OrderBy(_ => rng.Next()).ToList();    
-                    possibleUnfilteredTimeSlots = possibleUnfilteredTimeSlots.OrderBy(_ => rng.Next()).ToList();
+                    possibleUnfilteredTimeSlots = possibleUnfilteredTimeSlots.OrderByDescending(s => s.Item2.DayOfWeek == DayOfWeekPreference.ToArray()[0])
+                        .ThenByDescending(s => s.Item2.DayOfWeek == DayOfWeekPreference.ToArray()[1])
+                        .ThenByDescending(s => s.Item2.DayOfWeek == DayOfWeekPreference.ToArray()[2])
+                        .ThenByDescending(s => s.Item2.DayOfWeek == DayOfWeekPreference.ToArray()[3])
+                        .ThenByDescending(s => s.Item2.DayOfWeek == DayOfWeekPreference.ToArray()[4])
+                        .ThenByDescending(s => s.Item2.DayOfWeek == DayOfWeekPreference.ToArray()[5])
+                        .ThenByDescending(s => s.Item2.DayOfWeek == DayOfWeekPreference.ToArray()[6])
+                        .ThenBy(_ => rng.Next())
+                        .ToList();
 
                     foreach(Game g in games) //Remove any time and field combo that is already taken by a saved game
                     {
