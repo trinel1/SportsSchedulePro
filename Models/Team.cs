@@ -18,5 +18,6 @@ namespace SportsScheduleProLibrary.Models
         public List<Player> Players { get; set; } = new List<Player>();
         public List<Coach> Coaches { get; set; } = new List<Coach>();
         public List<Tournament> Tournaments { get; set; } = new List<Tournament>();
+        public List<Game> Games { get; set; }
     }
 }

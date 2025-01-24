@@ -15,12 +15,17 @@ namespace SportsScheduleProLibrary.Data
         public DbSet<AlertContact> AlertContacts { get; set; }
         public DbSet<Club> Clubs { get; set; }
         public DbSet<Coach> Coaches { get; set; }
+        public DbSet<Director> Directors { get; set; }
         public DbSet<Field> Fields { get; set; }
+        public DbSet<Game> Games { get; set; }
         public DbSet<League> Leagues { get; set; }
         public DbSet<Location> Locations { get; set; }
         //public DbSet<Person> People { get; set; }
+        public DbSet<Player> Players { get; set; }
         public DbSet<Referee> Referees { get; set; }
         public DbSet<Season> Seasons { get; set; }
+        public DbSet<Team> Teams { get; set; }
+        public DbSet<Tournament> Tournaments { get; set; }
 
         public SportsScheduleProDataContext()
         {
@@ -130,6 +135,15 @@ namespace SportsScheduleProLibrary.Data
                 });
             });
 
+            builder.Entity<Game>(entity =>
+            {
+                entity.ToTable("Game");
+                entity.HasKey(s => s.GameId);
+                entity.HasQueryFilter(s => !s.IsDeleted);
+                entity.HasOne(s => s.Field).WithMany(s => s.Games);
+                entity.HasOne(s => s.League).WithMany(s => s.Games);
+            });
+
             builder.Entity<Field>(entity =>
             {
                 entity.ToTable("Field");
@@ -170,7 +184,18 @@ namespace SportsScheduleProLibrary.Data
                     Gender = "Male",
                     Name = "2015-2016 Boys Recreational",
                     StartDate = new DateTime(2024, 9, 1),     
-                    LeagueId = 1
+                    GameLengthWindow = 90,
+                    EarliestGameTimeHourSaturday = 9,
+                    EarliestGameTimeMinuteSaturday = 0,
+                    EarliestGameTimeHourSunday = 13,
+                    EarliestGameTimeMinuteSunday = 0,
+                    EarliestGameTimeHourWeekday = 5,
+                    EarliestGameTimeMinuteWeekday = 45,
+                    PlayEachTimeCount = 1,
+                    DailyGamesPerFieldSaturday = 3,
+                    DailyGamesPerFieldSunday = 1,
+                    DailyGamesPerFieldWeekday = 1,
+                    LeagueId = 1                 
                 });
             });
 

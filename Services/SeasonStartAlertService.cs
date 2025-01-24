@@ -10,8 +10,6 @@ namespace SportsScheduleProLibrary.Services
         public static List<AlertContact> SendSeasonStartAlerts(Season season)
         {
             List<AlertContact> alertContacts = new List<AlertContact>();
-
-
             throw new NotImplementedException();
         }
     }

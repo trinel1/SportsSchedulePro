@@ -2,15 +2,17 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SportsScheduleProLibrary.Data;
 
 namespace SportsScheduleProLibrary.Migrations
 {
     [DbContext(typeof(SportsScheduleProDataContext))]
-    partial class SportsScheduleProDataContextModelSnapshot : ModelSnapshot
+    [Migration("20250124215733_NewFieldsAndGameType")]
+    partial class NewFieldsAndGameType
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -215,7 +217,7 @@ namespace SportsScheduleProLibrary.Migrations
                         new
                         {
                             AlertId = 1,
-                            AlertDate = new DateTime(2025, 1, 24, 15, 59, 19, 210, DateTimeKind.Local).AddTicks(6325),
+                            AlertDate = new DateTime(2025, 1, 24, 15, 57, 32, 980, DateTimeKind.Local).AddTicks(1177),
                             IsDeleted = false,
                             Message = "Weather alert - Fields will be closed due to inclement weather."
                         });

@@ -26,5 +26,6 @@ namespace SportsScheduleProLibrary.Models
         public Location Location { get; set; }
         public List<Tournament> Tournaments { get; set; }
         public Club Club { get; set; }
+        public List<Game> Games { get; set; }
     }
 }
