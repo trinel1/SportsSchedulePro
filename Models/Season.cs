@@ -24,5 +24,10 @@ namespace SportsScheduleProLibrary.Models
         public List<Referee> Referees { get; set; }
         public List<Team> Teams { get; set; }
 
+        public override string ToString()
+        {
+            return StartDate?.ToShortDateString() + " - " + EndDate?.ToShortDateString();
+        }
+
     }
 }

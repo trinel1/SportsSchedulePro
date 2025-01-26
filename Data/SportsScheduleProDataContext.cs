@@ -170,7 +170,7 @@ namespace SportsScheduleProLibrary.Data
                 entity.HasOne(s => s.Location).WithMany(s => s.Fields);
                 entity.HasData(new Field
                 {
-                    Name = "NELSA",
+                    Name = "NELSA Blue 1",
                     FieldId = 1,
                     IsOpenFriday = true,
                     IsOpenMonday = true,

@@ -113,7 +113,6 @@ namespace SportsScheduleProLibrary.Services
                         possibleUnfilteredTimeSlots.RemoveAll(s => s.Item1 == g.Field && s.Item2 == g.ChosenScheduleTime);
                     }
 
-                    int skipCount = 0;
 ;                   foreach (Game g in games)
                     {
                         if(g.ChosenScheduleTime == DateTime.MinValue)
@@ -148,8 +147,8 @@ namespace SportsScheduleProLibrary.Services
                             g.ChosenScheduleTime = selected.Item2;
                             g.League = l;
                         }
-
-                        dbc.Games.Add(g);
+                        if(g.GameId == 0)
+                            dbc.Games.Add(g);
                     }
                 }
                 dbc.SaveChanges();

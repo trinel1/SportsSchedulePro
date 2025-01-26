@@ -20,5 +20,10 @@ namespace SportsScheduleProLibrary.Models
         public List<Tournament> Tournaments { get; set; } = new List<Tournament>();
         public List<Game> Games { get; set; } = new List<Game>();
         public List<ExcludedGameDate> ExcludedGameDates { get; set; } = new List<ExcludedGameDate>();
+
+        public override string ToString()
+        {
+            return Name;
+        }
     }
 }

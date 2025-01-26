@@ -27,5 +27,10 @@ namespace SportsScheduleProLibrary.Models
         public List<Tournament> Tournaments { get; set; }
         public Club Club { get; set; }
         public List<Game> Games { get; set; }
+
+        public override string ToString()
+        {
+            return Name;
+        }
     }
 }

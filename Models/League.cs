@@ -35,5 +35,10 @@ namespace SportsScheduleProLibrary.Models
         public List<Referee> Referees { get; set; }
         public Club Club { get; set; }
         public List<Game> Games { get; set; } = new List<Game>();
+
+        public override string ToString()
+        {
+            return Name;
+        }
     }
 }
