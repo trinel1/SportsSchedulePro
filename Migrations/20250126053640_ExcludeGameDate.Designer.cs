@@ -2,15 +2,17 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SportsScheduleProLibrary.Data;
 
 namespace SportsScheduleProLibrary.Migrations
 {
     [DbContext(typeof(SportsScheduleProDataContext))]
-    partial class SportsScheduleProDataContextModelSnapshot : ModelSnapshot
+    [Migration("20250126053640_ExcludeGameDate")]
+    partial class ExcludeGameDate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

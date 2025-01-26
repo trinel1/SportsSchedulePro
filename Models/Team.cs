@@ -14,10 +14,11 @@ namespace SportsScheduleProLibrary.Models
 
         //Relationships
         public League League { get; set; }
-        public List<Season> Seasons { get; set; }
+        public List<Season> Seasons { get; set; } = new List<Season>();
         public List<Player> Players { get; set; } = new List<Player>();
         public List<Coach> Coaches { get; set; } = new List<Coach>();
         public List<Tournament> Tournaments { get; set; } = new List<Tournament>();
-        public List<Game> Games { get; set; }
+        public List<Game> Games { get; set; } = new List<Game>();
+        public List<ExcludedGameDate> ExcludedGameDates { get; set; } = new List<ExcludedGameDate>();
     }
 }

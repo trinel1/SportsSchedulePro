@@ -135,6 +135,20 @@ namespace SportsScheduleProLibrary.Data
                 });
             });
 
+            builder.Entity<ExcludedGameDate>(entity =>
+            {
+                entity.ToTable("ExcludedGameDate");
+                entity.HasKey(s => s.ExcludedGameDateId);
+                entity.HasQueryFilter(s => !s.IsDeleted);
+                entity.HasOne(s => s.Team).WithMany(s => s.ExcludedGameDates);
+                entity.HasData(new ExcludedGameDate
+                {
+                    ExcludedGameDateId = 1,
+                    ExcludedDate = new DateTime(2025, 4, 20),
+                    ExcludedTime = null,
+                });
+            });
+
             builder.Entity<Game>(entity =>
             {
                 entity.ToTable("Game");

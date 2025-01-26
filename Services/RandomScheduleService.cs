@@ -84,7 +84,7 @@ namespace SportsScheduleProLibrary.Services
                         {
                             if (t == i)
                                 continue;
-                            if (games.Where(s => s.HomeTeamId == t.TeamId && s.AwayTeamId == i.TeamId).Count() < l.PlayEachTimeCount)
+                            if (games.Where(s => (s.HomeTeamId == t.TeamId && s.AwayTeamId == i.TeamId) || (s.HomeTeamId ==i.TeamId && s.AwayTeamId == t.TeamId)).Count() >= l.PlayEachTimeCount)
                                 continue;
                             else
                             {
