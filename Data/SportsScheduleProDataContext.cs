@@ -16,6 +16,7 @@ namespace SportsScheduleProLibrary.Data
         public DbSet<Club> Clubs { get; set; }
         public DbSet<Coach> Coaches { get; set; }
         public DbSet<Director> Directors { get; set; }
+        public DbSet<ExcludedGameDate> ExcludedGameDates { get; set; }
         public DbSet<Field> Fields { get; set; }
         public DbSet<Game> Games { get; set; }
         public DbSet<League> Leagues { get; set; }
@@ -145,7 +146,8 @@ namespace SportsScheduleProLibrary.Data
                 {
                     ExcludedGameDateId = 1,
                     ExcludedDate = new DateTime(2025, 4, 20),
-                    ExcludedTime = null,
+                    ExcludedTimeStart = null,
+                    ExcludedTimeEnd = null,
                 });
             });
 

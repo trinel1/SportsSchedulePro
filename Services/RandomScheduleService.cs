@@ -19,7 +19,7 @@ namespace SportsScheduleProLibrary.Services
         {
 
             SportsScheduleProDataContext dbc = new SportsScheduleProDataContext();
-            List<Club> clubs = dbc.Clubs.Include(s => s.Leagues).ThenInclude(s => s.Fields).Include(s => s.Seasons).Include(s => s.Leagues).ThenInclude(s => s.Teams).ToList();
+            List<Club> clubs = dbc.Clubs.Include(s => s.Leagues).ThenInclude(s => s.Fields).Include(s => s.Seasons).Include(s => s.Leagues).ThenInclude(s => s.Teams).ThenInclude(s => s.ExcludedGameDates).ToList();
             List<Game> games = dbc.Games.ToList();
 
             foreach (Club c in clubs)
@@ -113,12 +113,37 @@ namespace SportsScheduleProLibrary.Services
                         possibleUnfilteredTimeSlots.RemoveAll(s => s.Item1 == g.Field && s.Item2 == g.ChosenScheduleTime);
                     }
 
+                    int skipCount = 0;
 ;                   foreach (Game g in games)
                     {
                         if(g.ChosenScheduleTime == DateTime.MinValue)
                         {
-                            Tuple<Field, DateTime> selected = possibleUnfilteredTimeSlots.First();
-                            possibleUnfilteredTimeSlots.RemoveAt(0);
+                            //Get list of possible times then filter out times the teams can't play
+                            List<Tuple<Field, DateTime>> availableForTeams = possibleUnfilteredTimeSlots.ToList();
+                            List<ExcludedGameDate> excludedGameTimesForBothTeams = dbc.ExcludedGameDates.Where(s => s.Team.TeamId == g.AwayTeamId || s.Team.TeamId == g.HomeTeamId).ToList();
+
+                            foreach(ExcludedGameDate egd in excludedGameTimesForBothTeams)
+                            {
+                                if(egd.ExcludedTimeEnd == null && egd.ExcludedTimeStart == null) //Date Only Restriction
+                                {
+                                    availableForTeams.RemoveAll(s => s.Item2.Date == egd.ExcludedDate.Date);
+                                }
+                                else if(egd.ExcludedTimeStart != null && egd.ExcludedTimeEnd == null) //Weird state, but since it's a start with no end then only allow games before and ending before this time
+                                {
+                                    availableForTeams.RemoveAll(s => s.Item2.AddMinutes(l.GameLengthWindow * -1).TimeOfDay <= egd.ExcludedTimeStart?.TimeOfDay && s.Item2.Date == egd.ExcludedDate);
+                                }
+                                else if (egd.ExcludedTimeStart == null && egd.ExcludedTimeEnd != null) //Another weird state.  Only allow games after or at the selected time
+                                {
+                                    availableForTeams.RemoveAll(s => s.Item2.TimeOfDay >= egd.ExcludedTimeStart?.TimeOfDay && s.Item2.Date == egd.ExcludedDate);
+                                }
+                                else if(egd.ExcludedTimeStart != null && egd.ExcludedTimeEnd != null) //Time restrictions that take out a section of a day
+                                {
+                                    availableForTeams.RemoveAll(s => s.Item2.AddMinutes(l.GameLengthWindow * -1).TimeOfDay <= egd.ExcludedTimeStart?.TimeOfDay && s.Item2.TimeOfDay >= egd.ExcludedTimeStart?.TimeOfDay && s.Item2.Date == egd.ExcludedDate);
+                                }
+                            }
+                            
+                            Tuple<Field, DateTime> selected = availableForTeams.First();
+                            possibleUnfilteredTimeSlots.Remove(selected);
                             g.Field = selected.Item1;
                             g.ChosenScheduleTime = selected.Item2;
                             g.League = l;

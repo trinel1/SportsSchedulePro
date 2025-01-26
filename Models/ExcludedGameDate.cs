@@ -12,7 +12,8 @@ namespace SportsScheduleProLibrary.Models
         public bool IsDeleted { get; set; }
 
         public DateTime ExcludedDate { get; set; }
-        public DateTime? ExcludedTime { get; set; }
+        public DateTime? ExcludedTimeStart { get; set; }
+        public DateTime? ExcludedTimeEnd { get; set; }
 
         //Relationships
         public Team Team { get; set; }
