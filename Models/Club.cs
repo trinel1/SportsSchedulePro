@@ -14,5 +14,10 @@ namespace SportsScheduleProLibrary.Models
         public List<Field> Fields { get; set; }
         public List<League> Leagues { get; set; }
         public List<Director> Directors { get; set; }
+
+        public override string ToString()
+        {
+            return Name;
+        }
     }
 }

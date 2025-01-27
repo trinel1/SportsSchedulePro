@@ -46,6 +46,9 @@ namespace SportsScheduleProLibrary.Services
                             DateTime currentDate = currentLeagueSeason.StartDate ?? DateTime.Now;
                             while (currentDate < l.EndDate)
                             {
+                                if ((currentDate.DayOfWeek == DayOfWeek.Sunday && !f.IsOpenSunday) || (currentDate.DayOfWeek == DayOfWeek.Monday && !f.IsOpenMonday) || (currentDate.DayOfWeek == DayOfWeek.Tuesday && !f.IsOpenTuesday) || (currentDate.DayOfWeek == DayOfWeek.Wednesday && !f.IsOpenWednesday) || (currentDate.DayOfWeek == DayOfWeek.Thursday && !f.IsOpenThursday) || (currentDate.DayOfWeek == DayOfWeek.Friday && !f.IsOpenFriday) || (currentDate.DayOfWeek == DayOfWeek.Saturday && !f.IsOpenSaturday))
+                                    continue;
+
                                 if (currentDate.DayOfWeek == DayOfWeek.Saturday)
                                 {
                                     for (int x = 0; x < l.DailyGamesPerFieldSaturday; x++)
@@ -121,7 +124,10 @@ namespace SportsScheduleProLibrary.Services
                             List<Tuple<Field, DateTime>> availableForTeams = possibleUnfilteredTimeSlots.ToList();
                             List<ExcludedGameDate> excludedGameTimesForBothTeams = dbc.ExcludedGameDates.Where(s => s.Team.TeamId == g.AwayTeamId || s.Team.TeamId == g.HomeTeamId).ToList();
 
-                            foreach(ExcludedGameDate egd in excludedGameTimesForBothTeams)
+                            List<DateTime> teamsCurrentGames = dbc.Games.Where(s => s.AwayTeamId == g.AwayTeamId || s.AwayTeamId == g.HomeTeamId || s.HomeTeamId == g.HomeTeamId || s.HomeTeamId == g.AwayTeamId).Select(s => s.ChosenScheduleTime).ToList();
+                            List<DateTime> teamsCurrentGameDays = dbc.Games.Where(s => s.AwayTeamId == g.AwayTeamId || s.AwayTeamId == g.HomeTeamId || s.HomeTeamId == g.HomeTeamId || s.HomeTeamId == g.AwayTeamId).Select(s => s.ChosenScheduleTime.Date).ToList();
+
+                            foreach (ExcludedGameDate egd in excludedGameTimesForBothTeams)
                             {
                                 if(egd.ExcludedTimeEnd == null && egd.ExcludedTimeStart == null) //Date Only Restriction
                                 {
@@ -140,15 +146,24 @@ namespace SportsScheduleProLibrary.Services
                                     availableForTeams.RemoveAll(s => s.Item2.AddMinutes(l.GameLengthWindow * -1).TimeOfDay <= egd.ExcludedTimeStart?.TimeOfDay && s.Item2.TimeOfDay >= egd.ExcludedTimeStart?.TimeOfDay && s.Item2.Date == egd.ExcludedDate);
                                 }
                             }
+
+                            if(teamsCurrentGames.Where(s => s == availableForTeams.First().Item2 || s.Date == availableForTeams.First().Item2.Date).Count() > 0)
+                            {
+
+                            }
                             
-                            Tuple<Field, DateTime> selected = availableForTeams.First();
+                            Tuple<Field, DateTime> selected = availableForTeams.Where(s => !teamsCurrentGames.Contains(s.Item2)).OrderBy(s => teamsCurrentGameDays.Contains(s.Item2.Date)).First();
                             possibleUnfilteredTimeSlots.Remove(selected);
                             g.Field = selected.Item1;
                             g.ChosenScheduleTime = selected.Item2;
                             g.League = l;
+
+
                         }
                         if(g.GameId == 0)
                             dbc.Games.Add(g);
+
+                        dbc.SaveChanges();
                     }
                 }
                 dbc.SaveChanges();

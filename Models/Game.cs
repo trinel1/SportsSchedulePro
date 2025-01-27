@@ -12,6 +12,9 @@ namespace SportsScheduleProLibrary.Models
     {
         public static SportsScheduleProDataContext dbc = new SportsScheduleProDataContext();
 
+        [NotMapped]
+        public string Description { get { return this.ToString(); } }
+
         public int GameId { get; set; }
         public bool IsDeleted { get; set; }
 
@@ -21,6 +24,11 @@ namespace SportsScheduleProLibrary.Models
         public Field Field { get; set; }
         public DateTime ChosenScheduleTime { get; set; }
         public League League { get; set; }
+
+        public Game()
+        {
+
+        }
 
         public override string ToString()
         {

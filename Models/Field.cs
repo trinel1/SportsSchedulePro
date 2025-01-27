@@ -10,13 +10,13 @@ namespace SportsScheduleProLibrary.Models
         public int FieldId { get; set; }
         public bool IsDeleted { get; set; }
         public string Name { get; set; }
-        public bool IsOpenSunday { get; set; }
-        public bool IsOpenMonday { get; set; }
-        public bool IsOpenTuesday { get; set; }
-        public bool IsOpenWednesday { get; set; }
-        public bool IsOpenThursday { get; set; }
-        public bool IsOpenFriday { get; set; }
-        public bool IsOpenSaturday { get; set; }
+        public bool IsOpenSunday { get; set; } = true;
+        public bool IsOpenMonday { get; set; } = true;
+        public bool IsOpenTuesday { get; set; } = true;
+        public bool IsOpenWednesday { get; set; } = true;
+        public bool IsOpenThursday { get; set; } = true;
+        public bool IsOpenFriday { get; set; } = true;
+        public bool IsOpenSaturday { get; set; } = true;
 
 
         public bool HasLights { get; set; }
