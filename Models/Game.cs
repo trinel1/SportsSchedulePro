@@ -14,6 +14,10 @@ namespace SportsScheduleProLibrary.Models
 
         [NotMapped]
         public string Description { get { return this.ToString(); } }
+        [NotMapped]
+        public string AwayTeam { get { return dbc.Teams.Where(s => s.TeamId == AwayTeamId).Select(s => s.Name).FirstOrDefault(); } } 
+        [NotMapped]
+        public string HomeTeam { get { return dbc.Teams.Where(s => s.TeamId == HomeTeamId).Select(s => s.Name).FirstOrDefault(); } }
 
         public int GameId { get; set; }
         public bool IsDeleted { get; set; }
