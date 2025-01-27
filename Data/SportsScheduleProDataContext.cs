@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using SportsScheduleProLibrary.Models;
@@ -41,7 +42,9 @@ namespace SportsScheduleProLibrary.Data
         {
             if (!optionsBuilder.IsConfigured)
             {
-                optionsBuilder.UseSqlite("Data Source=./SportsScheduleProData.db");
+                if(!Directory.Exists(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "/SportsSchedulePro"))
+                    Directory.CreateDirectory(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "/SportsSchedulePro");
+                optionsBuilder.UseSqlite("Data Source=" + Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "/SportsSchedulePro/SportsScheduleProData.db");
             }
         }
 
