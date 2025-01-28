@@ -35,6 +35,7 @@ namespace SportsScheduleProLibrary.Services
                     Random rng = new Random(Guid.NewGuid().GetHashCode() + Environment.TickCount);
                     List<Field> fieldsForLeague = l.Fields.OrderBy(_ => rng.Next()).ToList();
                     Season currentLeagueSeason = c.Seasons.OrderByDescending(s => s.EndDate).FirstOrDefault();
+                    TimeZoneInfo tzi = TimeZoneInfo.Local;
 
                     //Generate list of possible times and places
                     if (l.StartDate == null || l.EndDate == null)
@@ -63,7 +64,7 @@ namespace SportsScheduleProLibrary.Services
                                         possibleUnfilteredTimeSlots.Add(new Tuple<Field, DateTime>(f, currentDate.AddHours(l.EarliestGameTimeHourSunday).AddMinutes(l.EarliestGameTimeMinuteSunday).AddMinutes(l.GameLengthWindow * x)));
                                     }
                                 }
-                                else
+                                else if(tzi.IsDaylightSavingTime(currentDate))
                                 {
                                     for (int x = 0; x < l.DailyGamesPerFieldWeekday; x++)
                                     {
