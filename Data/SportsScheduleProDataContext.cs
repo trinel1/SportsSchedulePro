@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using SportsScheduleProLibrary.Models;
@@ -31,6 +32,15 @@ namespace SportsScheduleProLibrary.Data
 
         public SportsScheduleProDataContext()
         {
+            if(!File.Exists(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "/SportsSchedulePro/SportsScheduleProData" + DateTime.Now.ToString("yyyyMMdd") + ".zip"))
+            {
+                using (ZipArchive zip = ZipFile.Open(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "/SportsSchedulePro/SportsScheduleProData" + DateTime.Now.ToString("yyyyMMdd") + ".zip", ZipArchiveMode.Create))
+                {
+                    if (!Directory.Exists(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "/SportsSchedulePro"))
+                        Directory.CreateDirectory(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "/SportsSchedulePro");
+                    zip.CreateEntryFromFile(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "/SportsSchedulePro/SportsScheduleProData.db", "SportsScheduleProData.db");
+                }
+            }
         }
 
         public SportsScheduleProDataContext(DbContextOptions<SportsScheduleProDataContext> options)

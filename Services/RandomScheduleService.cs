@@ -146,6 +146,8 @@ namespace SportsScheduleProLibrary.Services
                                 {
                                     availableForTeams.RemoveAll(s => s.Item2.AddMinutes(l.GameLengthWindow * -1).TimeOfDay <= egd.ExcludedTimeStart?.TimeOfDay && s.Item2.TimeOfDay >= egd.ExcludedTimeStart?.TimeOfDay && s.Item2.Date == egd.ExcludedDate);
                                 }
+
+                                availableForTeams.RemoveAll(r => dbc.Games.Include(s => s.Field).Where(s => (s.HomeTeamId == g.HomeTeamId || s.AwayTeamId == g.AwayTeamId || s.HomeTeamId == g.AwayTeamId || s.AwayTeamId == g.HomeTeamId) && r.Item2 > s.ChosenScheduleTime.AddDays(-9) && r.Item2 < s.ChosenScheduleTime.AddDays(9)).Count() > 0);
                             }
 
                             if(teamsCurrentGames.Where(s => s == availableForTeams.First().Item2 || s.Date == availableForTeams.First().Item2.Date).Count() > 0)
