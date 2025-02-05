@@ -57,13 +57,13 @@ namespace SportsScheduleProLibrary.Services
                                         possibleUnfilteredTimeSlots.Add(new Tuple<Field, DateTime>(f, currentDate.AddHours(l.EarliestGameTimeHourSaturday).AddMinutes(l.EarliestGameTimeMinuteSaturday).AddMinutes(l.GameLengthWindow * x)));
                                     }
                                 }
-                                else if (currentDate.DayOfWeek == DayOfWeek.Sunday)
-                                {
-                                    for (int x = 0; x < l.DailyGamesPerFieldSunday; x++)
-                                    {
-                                        possibleUnfilteredTimeSlots.Add(new Tuple<Field, DateTime>(f, currentDate.AddHours(l.EarliestGameTimeHourSunday).AddMinutes(l.EarliestGameTimeMinuteSunday).AddMinutes(l.GameLengthWindow * x)));
-                                    }
-                                }
+                                //else if (currentDate.DayOfWeek == DayOfWeek.Sunday)
+                                //{
+                                //    for (int x = 0; x < l.DailyGamesPerFieldSunday; x++)
+                                //    {
+                                //        possibleUnfilteredTimeSlots.Add(new Tuple<Field, DateTime>(f, currentDate.AddHours(l.EarliestGameTimeHourSunday).AddMinutes(l.EarliestGameTimeMinuteSunday).AddMinutes(l.GameLengthWindow * x)));
+                                //    }
+                                //}
                                 else if(tzi.IsDaylightSavingTime(currentDate))
                                 {
                                     for (int x = 0; x < l.DailyGamesPerFieldWeekday; x++)
@@ -84,11 +84,11 @@ namespace SportsScheduleProLibrary.Services
 
                     foreach(Team t in teams)
                     {
-                        foreach(Team i in teams) //I guess there is an "I" in team
+                        foreach(Team i in teams.OrderBy(_ => rng.Next()).ToList()) //I guess there is an "I" in team
                         {
                             if (t == i)
                                 continue;
-                            if (games.Where(s => (s.HomeTeamId == t.TeamId && s.AwayTeamId == i.TeamId) || (s.HomeTeamId ==i.TeamId && s.AwayTeamId == t.TeamId)).Count() >= l.PlayEachTimeCount)
+                            if (games.Where(s => (s.HomeTeamId == t.TeamId && s.AwayTeamId == i.TeamId) || (s.HomeTeamId == i.TeamId && s.AwayTeamId == t.TeamId)).Count() >= l.PlayEachTimeCount)
                                 continue;
                             else
                             {
@@ -153,13 +153,30 @@ namespace SportsScheduleProLibrary.Services
 
                             }
 
+                            //Remove times that would put the two teams playing each other again in less than eight days
                             if(dbc.Games.Include(s => s.Field).Where(s => ((s.HomeTeamId == g.HomeTeamId || s.HomeTeamId == g.AwayTeamId) && (s.AwayTeamId == g.AwayTeamId || s.AwayTeamId == g.HomeTeamId))).Count() > 0)
                                 availableForTeams.RemoveAll(r => dbc.Games.Include(s => s.Field).Where(s => ((s.HomeTeamId == g.HomeTeamId || s.HomeTeamId == g.AwayTeamId) && (s.AwayTeamId == g.AwayTeamId || s.AwayTeamId == g.HomeTeamId)) && r.Item2 > s.ChosenScheduleTime.AddDays(-8) && r.Item2 < s.ChosenScheduleTime.AddDays(8)).Count() > 0);
 
-                            availableForTeams = availableForTeams.Where(s => !teamsCurrentGames.Contains(s.Item2))
-                                .OrderBy(s => teamsCurrentGameDays.Contains(s.Item2.Date))
-                                .ThenBy(t => dbc.Games.Include(s => s.Field).Where(s => ((s.HomeTeamId == g.HomeTeamId || s.HomeTeamId == g.AwayTeamId) && (s.AwayTeamId == g.AwayTeamId || s.AwayTeamId == g.HomeTeamId)) && t.Item2 > s.ChosenScheduleTime.AddDays(-10) && t.Item2 < s.ChosenScheduleTime.AddDays(10)).Count() > 0)
-                                .ThenByDescending(s => s.Item2.DayOfWeek == DayOfWeekPreference.ToArray()[0])
+                            List<int> teamsWithGameInFirstEightDays = dbc.Games.Where(s => s.ChosenScheduleTime <= ((DateTime) currentLeagueSeason.StartDate).AddDays(8) && s.League == l).Select(s => s.AwayTeamId).Distinct().ToList();
+                            teamsWithGameInFirstEightDays.AddRange(dbc.Games.Where(s => s.ChosenScheduleTime <= ((DateTime)currentLeagueSeason.StartDate).AddDays(8) && s.League == l).Select(s => s.HomeTeamId).Distinct().ToList());
+
+                            if (!teamsWithGameInFirstEightDays.Contains(g.HomeTeamId) || !teamsWithGameInFirstEightDays.Contains(g.AwayTeamId))
+                            {
+                                availableForTeams = availableForTeams.Where(s => !teamsCurrentGames.Contains(s.Item2) && s.Item2.Date >= currentLeagueSeason.StartDate && s.Item2.Date <= ((DateTime)currentLeagueSeason.StartDate).Date.AddDays(8)) //Try to make it so the team doesn't play twice in the same day and time. Also make sure that every team has at least one game in the first two Saturdays.
+                                .OrderBy(s => teamsCurrentGameDays.Contains(s.Item2.Date)) //Try to make it so teams don't have to play twice in the same day
+                                .ThenBy(t => dbc.Games.Include(s => s.Field).Where(s => ((s.HomeTeamId == g.HomeTeamId || s.HomeTeamId == g.AwayTeamId) && (s.AwayTeamId == g.AwayTeamId || s.AwayTeamId == g.HomeTeamId)) && t.Item2 > s.ChosenScheduleTime.AddDays(-10) && t.Item2 < s.ChosenScheduleTime.AddDays(10)).Count() > 0) //Make it so the teams don't have to play each other too often.
+                                .ThenByDescending(s => s.Item2.Date >= currentLeagueSeason.StartDate && s.Item2.Date <= ((DateTime)currentLeagueSeason.StartDate).Date.AddDays(8)) //Make sure that the top set of days is included
+                                .ThenByDescending(s => s.Item2.DayOfWeek == DayOfWeekPreference.ToArray()[0]) //Prioritize the game schedules to use the most preferred day of week.  Sunday and week games are very likely if you don't here.
+                                //.ThenBy(_ => rng.Next())
+                                .ToList();
+                            }
+                            else
+                            {
+                                availableForTeams = availableForTeams.Where(s => !teamsCurrentGames.Contains(s.Item2)) //Try to make it so the team doesn't play twice in the same day and time
+                                .OrderBy(s => teamsCurrentGameDays.Contains(s.Item2.Date)) //Try to make it so teams don't have to play twice in the same day
+                                .ThenBy(t => dbc.Games.Include(s => s.Field).Where(s => ((s.HomeTeamId == g.HomeTeamId || s.HomeTeamId == g.AwayTeamId) && (s.AwayTeamId == g.AwayTeamId || s.AwayTeamId == g.HomeTeamId)) && t.Item2 > s.ChosenScheduleTime.AddDays(-10) && t.Item2 < s.ChosenScheduleTime.AddDays(10)).Count() > 0) //Make it so the teams don't have to play each other too often.
+                                .ThenBy(s => s.Item2.Date >= currentLeagueSeason.StartDate && s.Item2.Date <= ((DateTime)currentLeagueSeason.StartDate).Date.AddDays(8)) //Do this to encourage the later schedules to be picked first when teams already have a game in the first two Saturdays
+                                .ThenByDescending(s => s.Item2.DayOfWeek == DayOfWeekPreference.ToArray()[0]) //Prioritize the game schedules to use the most preferred day of week
                                 .ThenByDescending(s => s.Item2.DayOfWeek == DayOfWeekPreference.ToArray()[1])
                                 .ThenByDescending(s => s.Item2.DayOfWeek == DayOfWeekPreference.ToArray()[2])
                                 .ThenByDescending(s => s.Item2.DayOfWeek == DayOfWeekPreference.ToArray()[3])
@@ -168,6 +185,7 @@ namespace SportsScheduleProLibrary.Services
                                 .ThenByDescending(s => s.Item2.DayOfWeek == DayOfWeekPreference.ToArray()[6])
                                 .ThenBy(_ => rng.Next())
                                 .ToList();
+                            }
                             Tuple<Field, DateTime> selected = availableForTeams.First();
                             possibleUnfilteredTimeSlots.Remove(selected);
                             g.Field = selected.Item1;
