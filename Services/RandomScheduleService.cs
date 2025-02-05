@@ -84,7 +84,7 @@ namespace SportsScheduleProLibrary.Services
 
                     foreach(Team t in teams)
                     {
-                        foreach(Team i in teams) //I guess there is an "I" in team
+                        foreach(Team i in teams.OrderBy(_ => rng.Next())) //I guess there is an "I" in team
                         {
                             if (t == i)
                                 continue;
