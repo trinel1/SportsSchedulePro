@@ -84,7 +84,7 @@ namespace SportsScheduleProLibrary.Services
 
                     foreach(Team t in teams)
                     {
-                        foreach(Team i in teams.OrderBy(_ => rng.Next()).ToList()) //I guess there is an "I" in team
+                        foreach(Team i in teams) //I guess there is an "I" in team
                         {
                             if (t == i)
                                 continue;
@@ -157,10 +157,12 @@ namespace SportsScheduleProLibrary.Services
                             if(dbc.Games.Include(s => s.Field).Where(s => ((s.HomeTeamId == g.HomeTeamId || s.HomeTeamId == g.AwayTeamId) && (s.AwayTeamId == g.AwayTeamId || s.AwayTeamId == g.HomeTeamId))).Count() > 0)
                                 availableForTeams.RemoveAll(r => dbc.Games.Include(s => s.Field).Where(s => ((s.HomeTeamId == g.HomeTeamId || s.HomeTeamId == g.AwayTeamId) && (s.AwayTeamId == g.AwayTeamId || s.AwayTeamId == g.HomeTeamId)) && r.Item2 > s.ChosenScheduleTime.AddDays(-8) && r.Item2 < s.ChosenScheduleTime.AddDays(8)).Count() > 0);
 
-                            List<int> teamsWithGameInFirstEightDays = dbc.Games.Where(s => s.ChosenScheduleTime <= ((DateTime) currentLeagueSeason.StartDate).AddDays(8) && s.League == l).Select(s => s.AwayTeamId).Distinct().ToList();
-                            teamsWithGameInFirstEightDays.AddRange(dbc.Games.Where(s => s.ChosenScheduleTime <= ((DateTime)currentLeagueSeason.StartDate).AddDays(8) && s.League == l).Select(s => s.HomeTeamId).Distinct().ToList());
+                            List<int> teamsWithGameInFirstEightDays = dbc.Games.Where(s => s.ChosenScheduleTime <= ((DateTime) currentLeagueSeason.StartDate).AddDays(8) && s.League == l).Select(s => s.AwayTeamId).ToList();
+                            teamsWithGameInFirstEightDays.AddRange(dbc.Games.Where(s => s.ChosenScheduleTime <= ((DateTime)currentLeagueSeason.StartDate).AddDays(8) && s.League == l).Select(s => s.HomeTeamId).ToList());
 
-                            if (!teamsWithGameInFirstEightDays.Contains(g.HomeTeamId) || !teamsWithGameInFirstEightDays.Contains(g.AwayTeamId))
+                            int teamsInLeague = l.Teams.Count();
+
+                            if ((!teamsWithGameInFirstEightDays.Contains(g.HomeTeamId) || !teamsWithGameInFirstEightDays.Contains(g.AwayTeamId)) && teamsWithGameInFirstEightDays.Where(s => (s == g.HomeTeamId || s == g.AwayTeamId) && (s == g.AwayTeamId || s == g.HomeTeamId)).Count() < 2) //Make sure that at least one of the times doesn't have an early season game, and that the teams aren't playing more than two in the opening eight days
                             {
                                 availableForTeams = availableForTeams.Where(s => !teamsCurrentGames.Contains(s.Item2) && s.Item2.Date >= currentLeagueSeason.StartDate && s.Item2.Date <= ((DateTime)currentLeagueSeason.StartDate).Date.AddDays(8)) //Try to make it so the team doesn't play twice in the same day and time. Also make sure that every team has at least one game in the first two Saturdays.
                                 .OrderBy(s => teamsCurrentGameDays.Contains(s.Item2.Date)) //Try to make it so teams don't have to play twice in the same day
@@ -172,7 +174,7 @@ namespace SportsScheduleProLibrary.Services
                             }
                             else
                             {
-                                availableForTeams = availableForTeams.Where(s => !teamsCurrentGames.Contains(s.Item2)) //Try to make it so the team doesn't play twice in the same day and time
+                                availableForTeams = availableForTeams.Where(s => !teamsCurrentGames.Contains(s.Item2) && (!(s.Item2.Date >= currentLeagueSeason.StartDate && s.Item2.Date <= ((DateTime)currentLeagueSeason.StartDate).Date.AddDays(8)) || teamsWithGameInFirstEightDays.Distinct().Count() == teamsInLeague)) //Try to make it so the team doesn't play twice in the same day and time
                                 .OrderBy(s => teamsCurrentGameDays.Contains(s.Item2.Date)) //Try to make it so teams don't have to play twice in the same day
                                 .ThenBy(t => dbc.Games.Include(s => s.Field).Where(s => ((s.HomeTeamId == g.HomeTeamId || s.HomeTeamId == g.AwayTeamId) && (s.AwayTeamId == g.AwayTeamId || s.AwayTeamId == g.HomeTeamId)) && t.Item2 > s.ChosenScheduleTime.AddDays(-10) && t.Item2 < s.ChosenScheduleTime.AddDays(10)).Count() > 0) //Make it so the teams don't have to play each other too often.
                                 .ThenBy(s => s.Item2.Date >= currentLeagueSeason.StartDate && s.Item2.Date <= ((DateTime)currentLeagueSeason.StartDate).Date.AddDays(8)) //Do this to encourage the later schedules to be picked first when teams already have a game in the first two Saturdays
@@ -186,6 +188,7 @@ namespace SportsScheduleProLibrary.Services
                                 .ThenBy(_ => rng.Next())
                                 .ToList();
                             }
+
                             Tuple<Field, DateTime> selected = availableForTeams.First();
                             possibleUnfilteredTimeSlots.Remove(selected);
                             g.Field = selected.Item1;
@@ -198,6 +201,12 @@ namespace SportsScheduleProLibrary.Services
                             dbc.Games.Add(g);
 
                         dbc.SaveChanges();
+                    }
+
+                    //Do some last minute checks
+                    foreach(Game g in games)
+                    {
+
                     }
                 }
                 dbc.SaveChanges();
