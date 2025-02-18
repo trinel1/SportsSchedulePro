@@ -93,7 +93,7 @@ namespace SportsScheduleProLibrary.Services
                                 continue;
                             if (games.Where(s => (s.HomeTeamId == t.TeamId && s.AwayTeamId == i.TeamId) || (s.HomeTeamId == i.TeamId && s.AwayTeamId == t.TeamId)).Count() >= l.PlayEachTimeCount)
                                 continue;
-                            if (games.Where(s => s.HomeTeamId == t.TeamId).Count() + teams.Count % 1 >= l.GamesPerSeason || games.Where(s => s.HomeTeamId == i.TeamId).Count() + teams.Count % 1 >= l.GamesPerSeason)
+                            if (games.Where(s => s.HomeTeamId == t.TeamId).Count() + teams.Count % 2 >= l.GamesPerSeason || games.Where(s => s.AwayTeamId == i.TeamId).Count() + teams.Count % 2 >= l.GamesPerSeason)
                                 continue;
                             else
                             {
@@ -213,6 +213,8 @@ namespace SportsScheduleProLibrary.Services
                                 .ToList();
                             }
 
+                            if (availableForTeams.Count == 0)
+                                continue;
                             Tuple<Field, DateTime> selected = availableForTeams.First();
                             possibleUnfilteredTimeSlots.Remove(selected);
                             g.Field = selected.Item1;
