@@ -83,28 +83,162 @@ namespace SportsScheduleProLibrary.Services
 
                     //Generate list of matchups excluding 
                     List<Team> teams = l.Teams.ToList().OrderByDescending(s => s.ExcludedGameDates.Count()).OrderBy(_ => rng.Next()).ToList();
+                    List<int> teamIds = teams.Select(s => s.TeamId).ToList();
                     games = dbc.Games.Where(s => s.League.LeagueId == l.LeagueId).ToList();
 
-                    foreach(Team t in teams)
+                    // First, ensure all teams have an entry in the game count dictionary
+                    List<Game> homeTeamGames = dbc.Games
+                        .Where(s => teamIds.Contains(s.HomeTeamId))
+                        .ToList();
+
+                    List<Game> awayTeamGames = dbc.Games
+                        .Where(s => teamIds.Contains(s.AwayTeamId))
+                        .ToList();
+
+                    Dictionary<int, int> teamGameCount = new Dictionary<int, int>();
+                    foreach(Game g in homeTeamGames)
                     {
-                        foreach(Team i in teams.OrderBy(_ => rng.Next())) //I guess there is an "I" in team
+                        if (!teamGameCount.ContainsKey(g.HomeTeamId))
+                            teamGameCount.Add(g.HomeTeamId, 1);
+                        else
+                            teamGameCount[g.HomeTeamId] += 1;
+                    }
+
+                    foreach (Game g in awayTeamGames)
+                    {
+                        if (!teamGameCount.ContainsKey(g.AwayTeamId))
+                            teamGameCount.Add(g.AwayTeamId, 1);
+                        else
+                            teamGameCount[g.AwayTeamId] += 1;
+                    }
+
+                    // Ensure all teams have an entry (teams with 0 games)
+                    foreach (var team in teams)
+                    {
+                        if (!teamGameCount.ContainsKey(team.TeamId))
+                            teamGameCount[team.TeamId] = 0;
+                    }
+
+                    // Shuffle the teams once for fairness
+                    var shuffledTeams = teams.OrderBy(_ => rng.Next()).ToList();
+
+                    // Perform the round-robin scheduling
+                    foreach (Team t in shuffledTeams)
+                    {
+                        for (int x = 0; x < l.GamesPerSeason; x++)
                         {
-                            if (t == i)
+                            int id = teamGameCount.Where(s => s.Key != t.TeamId).OrderBy(s => s.Value).ThenBy(_ => rng.Next()).FirstOrDefault().Key;
+
+
+                            // Ensure both teams are within the valid game range (either l.GamesPerSeason or l.GamesPerSeason + 1)
+                            int teamCountHome = teamGameCount.ContainsKey(t.TeamId) ? teamGameCount[t.TeamId] : 0;
+                            int teamCountAway = teamGameCount.ContainsKey(id) ? teamGameCount[id] : 0;
+
+                            if (teamCountHome >= l.GamesPerSeason || teamCountAway >= l.GamesPerSeason)
                                 continue;
-                            if (games.Where(s => (s.HomeTeamId == t.TeamId && s.AwayTeamId == i.TeamId) || (s.HomeTeamId == i.TeamId && s.AwayTeamId == t.TeamId)).Count() >= l.PlayEachTimeCount)
-                                continue;
-                            if (games.Where(s => s.HomeTeamId == t.TeamId).Count() + teams.Count % 2 >= l.GamesPerSeason || games.Where(s => s.AwayTeamId == i.TeamId).Count() + teams.Count % 2 >= l.GamesPerSeason)
-                                continue;
-                            else
+
+                            // Add the game and update game counts
+                            if (games.Where(s => s.HomeTeamId == t.TeamId && s.AwayTeamId == id).Count() < l.PlayEachTimeCount)
                             {
                                 games.Add(new Game
                                 {
                                     HomeTeamId = t.TeamId,
-                                    AwayTeamId = i.TeamId,
+                                    AwayTeamId = id,
                                 });
+
+                                // Update team counts
+                                teamGameCount[t.TeamId]++;
+                                teamGameCount[id]++;
+                            }
+                            else
+                            {
+                                continue;
+                            }
+                        }
+
+                        //foreach (Team i in shuffledTeams)
+                        //{
+                        //    if (t == i)
+                        //        continue;
+
+                        //    // Check if these teams have already played the allowed number of times
+                        //    //if (games.Count(s => (s.HomeTeamId == t.TeamId && s.AwayTeamId == i.TeamId) || (s.HomeTeamId == i.TeamId && s.AwayTeamId == t.TeamId)) >= l.PlayEachTimeCount)
+                        //    //    continue;
+                        //    //if (games.Count(s => (s.HomeTeamId == t.TeamId && s.AwayTeamId == i.TeamId) ||
+                        //    //                     (s.HomeTeamId == i.TeamId && s.AwayTeamId == t.TeamId)) >= l.PlayEachTimeCount)
+                        //    //    continue;
+
+                        //    // Ensure both teams are within the valid game range (either l.GamesPerSeason or l.GamesPerSeason + 1)
+                        //    int teamCountHome = teamGameCount.ContainsKey(t.TeamId) ? teamGameCount[t.TeamId] : 0;
+                        //    int teamCountAway = teamGameCount.ContainsKey(i.TeamId) ? teamGameCount[i.TeamId] : 0;
+
+                        //    if (teamCountHome >= l.GamesPerSeason + 1 || teamCountAway >= l.GamesPerSeason + 1)
+                        //        continue;
+
+                        //    // Add the game and update game counts
+                        //    games.Add(new Game
+                        //    {
+                        //        HomeTeamId = t.TeamId,
+                        //        AwayTeamId = i.TeamId,
+                        //    });
+
+                        //    // Update team counts
+                        //    teamGameCount[t.TeamId]++;
+                        //    teamGameCount[i.TeamId]++;
+                        //}
+                    }
+
+                    // After initial round-robin scheduling, ensure that every team gets exactly GamesPerSeason games
+                    // Loop through each team and fill in any remaining games
+                    foreach (var team in teams)
+                    {
+                        // While a team has fewer games than the target, keep pairing it
+                        while (teamGameCount[team.TeamId] < l.GamesPerSeason)
+                        {
+                            // Find an opponent that also has fewer games
+                            var opponent = teams.FirstOrDefault(i => i.TeamId != team.TeamId && teamGameCount[i.TeamId] < l.GamesPerSeason);
+
+                            // If we found a valid opponent, add the game
+                            if (opponent != null)
+                            {
+                                games.Add(new Game
+                                {
+                                    HomeTeamId = team.TeamId,
+                                    AwayTeamId = opponent.TeamId,
+                                });
+
+                                teamGameCount[team.TeamId]++;
+                                teamGameCount[opponent.TeamId]++;
+                            }
+                            else
+                            {
+                                // If no opponent can be found, break out (to avoid infinite loop)
+                                break;
                             }
                         }
                     }
+
+
+                    //foreach(Team t in teams)
+                    //{
+                    //    foreach(Team i in teams.OrderBy(_ => rng.Next())) //I guess there is an "I" in team
+                    //    {
+                    //        if (t == i)
+                    //            continue;
+                    //        if (games.Where(s => (s.HomeTeamId == t.TeamId && s.AwayTeamId == i.TeamId) || (s.HomeTeamId == i.TeamId && s.AwayTeamId == t.TeamId)).Count() >= l.PlayEachTimeCount)
+                    //            continue;
+                    //        if (games.Where(s => s.HomeTeamId == t.TeamId || s.AwayTeamId == t.TeamId).Count() + teams.Count % 2 > l.GamesPerSeason || games.Where(s => s.AwayTeamId == i.TeamId || s.HomeTeamId == i.TeamId).Count() + teams.Count % 2 > l.GamesPerSeason)
+                    //            continue;
+                    //        else
+                    //        {
+                    //            games.Add(new Game
+                    //            {
+                    //                HomeTeamId = t.TeamId,
+                    //                AwayTeamId = i.TeamId,
+                    //            });
+                    //        }
+                    //    }
+                    //}
 
                     games = games.OrderBy(_ => rng.Next()).ToList();    
                     //possibleUnfilteredTimeSlots = possibleUnfilteredTimeSlots.OrderByDescending(s => s.Item2.DayOfWeek == DayOfWeekPreference.ToArray()[0])
