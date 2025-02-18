@@ -9,8 +9,8 @@ using SportsScheduleProLibrary.Data;
 namespace SportsScheduleProLibrary.Migrations
 {
     [DbContext(typeof(SportsScheduleProDataContext))]
-    [Migration("20250124215919_LeagueSeedUpdate")]
-    partial class LeagueSeedUpdate
+    [Migration("20250218024129_Init")]
+    partial class Init
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -217,7 +217,7 @@ namespace SportsScheduleProLibrary.Migrations
                         new
                         {
                             AlertId = 1,
-                            AlertDate = new DateTime(2025, 1, 24, 15, 59, 19, 210, DateTimeKind.Local).AddTicks(6325),
+                            AlertDate = new DateTime(2025, 2, 17, 20, 41, 28, 724, DateTimeKind.Local).AddTicks(9819),
                             IsDeleted = false,
                             Message = "Weather alert - Fields will be closed due to inclement weather."
                         });
@@ -360,6 +360,42 @@ namespace SportsScheduleProLibrary.Migrations
                         });
                 });
 
+            modelBuilder.Entity("SportsScheduleProLibrary.Models.ExcludedGameDate", b =>
+                {
+                    b.Property<int>("ExcludedGameDateId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("ExcludedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("ExcludedTimeEnd")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("ExcludedTimeStart")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("TeamId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("ExcludedGameDateId");
+
+                    b.HasIndex("TeamId");
+
+                    b.ToTable("ExcludedGameDate");
+
+                    b.HasData(
+                        new
+                        {
+                            ExcludedGameDateId = 1,
+                            ExcludedDate = new DateTime(2025, 4, 20, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsDeleted = false
+                        });
+                });
+
             modelBuilder.Entity("SportsScheduleProLibrary.Models.Field", b =>
                 {
                     b.Property<int>("FieldId")
@@ -423,7 +459,7 @@ namespace SportsScheduleProLibrary.Migrations
                             IsOpenThursday = true,
                             IsOpenTuesday = true,
                             IsOpenWednesday = true,
-                            Name = "NELSA"
+                            Name = "NELSA Blue 1"
                         });
                 });
 
@@ -554,7 +590,7 @@ namespace SportsScheduleProLibrary.Migrations
                             DailyGamesPerFieldWeekday = 1,
                             EarliestGameTimeHourSaturday = 9,
                             EarliestGameTimeHourSunday = 13,
-                            EarliestGameTimeHourWeekday = 5,
+                            EarliestGameTimeHourWeekday = 17,
                             EarliestGameTimeMinuteSaturday = 0,
                             EarliestGameTimeMinuteSunday = 0,
                             EarliestGameTimeMinuteWeekday = 45,
@@ -1023,6 +1059,15 @@ namespace SportsScheduleProLibrary.Migrations
                     b.Navigation("Club");
                 });
 
+            modelBuilder.Entity("SportsScheduleProLibrary.Models.ExcludedGameDate", b =>
+                {
+                    b.HasOne("SportsScheduleProLibrary.Models.Team", "Team")
+                        .WithMany("ExcludedGameDates")
+                        .HasForeignKey("TeamId");
+
+                    b.Navigation("Team");
+                });
+
             modelBuilder.Entity("SportsScheduleProLibrary.Models.Field", b =>
                 {
                     b.HasOne("SportsScheduleProLibrary.Models.Club", "Club")
@@ -1171,6 +1216,8 @@ namespace SportsScheduleProLibrary.Migrations
 
             modelBuilder.Entity("SportsScheduleProLibrary.Models.Team", b =>
                 {
+                    b.Navigation("ExcludedGameDates");
+
                     b.Navigation("Games");
                 });
 #pragma warning restore 612, 618

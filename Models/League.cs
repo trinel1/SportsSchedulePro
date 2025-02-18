@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
 
 namespace SportsScheduleProLibrary.Models
@@ -23,6 +24,7 @@ namespace SportsScheduleProLibrary.Models
         public int EarliestGameTimeHourWeekday { get; set; }
         public int EarliestGameTimeMinuteWeekday { get; set; }
         public int PlayEachTimeCount { get; set; } = 1;
+        public int GamesPerSeason { get; set; } = 8;
         public int DailyGamesPerFieldSaturday { get; set; } = 3;
         public int DailyGamesPerFieldSunday { get; set; } = 1;
         public int DailyGamesPerFieldWeekday { get; set; } = 1;

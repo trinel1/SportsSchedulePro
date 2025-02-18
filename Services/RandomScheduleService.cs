@@ -93,12 +93,14 @@ namespace SportsScheduleProLibrary.Services
                                 continue;
                             if (games.Where(s => (s.HomeTeamId == t.TeamId && s.AwayTeamId == i.TeamId) || (s.HomeTeamId == i.TeamId && s.AwayTeamId == t.TeamId)).Count() >= l.PlayEachTimeCount)
                                 continue;
+                            if (games.Where(s => s.HomeTeamId == t.TeamId).Count() + teams.Count % 1 >= l.GamesPerSeason || games.Where(s => s.HomeTeamId == i.TeamId).Count() + teams.Count % 1 >= l.GamesPerSeason)
+                                continue;
                             else
                             {
                                 games.Add(new Game
                                 {
                                     HomeTeamId = t.TeamId,
-                                    AwayTeamId = i.TeamId,                                   
+                                    AwayTeamId = i.TeamId,
                                 });
                             }
                         }

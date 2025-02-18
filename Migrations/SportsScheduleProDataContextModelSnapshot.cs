@@ -215,7 +215,7 @@ namespace SportsScheduleProLibrary.Migrations
                         new
                         {
                             AlertId = 1,
-                            AlertDate = new DateTime(2025, 1, 26, 0, 1, 18, 289, DateTimeKind.Local).AddTicks(3512),
+                            AlertDate = new DateTime(2025, 2, 17, 20, 43, 37, 31, DateTimeKind.Local).AddTicks(9749),
                             IsDeleted = false,
                             Message = "Weather alert - Fields will be closed due to inclement weather."
                         });
@@ -457,7 +457,7 @@ namespace SportsScheduleProLibrary.Migrations
                             IsOpenThursday = true,
                             IsOpenTuesday = true,
                             IsOpenWednesday = true,
-                            Name = "NELSA"
+                            Name = "NELSA Blue 1"
                         });
                 });
 
@@ -553,6 +553,9 @@ namespace SportsScheduleProLibrary.Migrations
                     b.Property<int>("GameLengthWindow")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("GamesPerSeason")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Gender")
                         .HasColumnType("TEXT");
 
@@ -594,6 +597,7 @@ namespace SportsScheduleProLibrary.Migrations
                             EarliestGameTimeMinuteWeekday = 45,
                             EndDate = new DateTime(2025, 4, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             GameLengthWindow = 90,
+                            GamesPerSeason = 8,
                             Gender = "Male",
                             IsDeleted = false,
                             Name = "2015-2016 Boys Recreational",
