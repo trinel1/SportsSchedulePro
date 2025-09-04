@@ -15,6 +15,92 @@ namespace SportsScheduleProLibrary.Services
             DayOfWeek.Saturday, DayOfWeek.Tuesday, DayOfWeek.Thursday, DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Sunday, DayOfWeek.Friday
         };
 
+
+        public static List<Game> GameScheduleV2(League league = null, Season season = null, Club club = null)
+        {
+            SportsScheduleProDataContext dbc = new SportsScheduleProDataContext();
+            List<Club> clubs = dbc.Clubs.Include(s => s.Leagues).ThenInclude(s => s.Fields).Include(s => s.Seasons).Include(s => s.Leagues).ThenInclude(s => s.Teams).ThenInclude(s => s.ExcludedGameDates).ToList();
+            List<Game> games = dbc.Games.ToList();
+
+            if (club != null)
+                clubs = new List<Club> { club };
+
+            foreach (Club c in clubs)
+            {                    
+                Random rng = new Random(Guid.NewGuid().GetHashCode() + Environment.TickCount);
+                List<League> leagues = c.Leagues.ToList();
+                List<Field> fieldsForClub = dbc.Fields.Include(s => s.Leagues).OrderBy(_ => rng.Next()).ToList();
+                if (league != null)
+                    leagues = new List<League> { league };
+
+                Season currentLeagueSeason = season ?? c.Seasons.OrderByDescending(s => s.EndDate).FirstOrDefault();
+                TimeZoneInfo tzi = TimeZoneInfo.Local;
+
+                List<Tuple<Field, DateTime>> possibleUnfilteredTimeSlots = new List<Tuple<Field, DateTime>>();
+
+
+                //Generate list of possible times and places
+                if (season.StartDate == null || season.EndDate == null)
+                    continue;
+                else
+                {
+                    foreach (Field f in fieldsForClub)
+                    {
+                        DateTime currentDate = (currentLeagueSeason.StartDate ?? DateTime.Now) >= DateTime.Now ? (currentLeagueSeason.StartDate ?? DateTime.Now) : DateTime.Now;
+                        while (currentDate < season.EndDate)
+                        {
+                            if ((currentDate.DayOfWeek == DayOfWeek.Sunday && !f.IsOpenSunday) || (currentDate.DayOfWeek == DayOfWeek.Monday && !f.IsOpenMonday) || (currentDate.DayOfWeek == DayOfWeek.Tuesday && !f.IsOpenTuesday) || (currentDate.DayOfWeek == DayOfWeek.Wednesday && !f.IsOpenWednesday) || (currentDate.DayOfWeek == DayOfWeek.Thursday && !f.IsOpenThursday) || (currentDate.DayOfWeek == DayOfWeek.Friday && !f.IsOpenFriday) || (currentDate.DayOfWeek == DayOfWeek.Saturday && !f.IsOpenSaturday))
+                                continue;
+
+                            if (currentDate.DayOfWeek == DayOfWeek.Saturday)
+                            {
+                                for (int x = 0; x < f.DailyGamesPerFieldSaturday; x++)
+                                {
+                                    possibleUnfilteredTimeSlots.Add(new Tuple<Field, DateTime>(f, currentDate.AddHours(f.EarliestGameTimeHourSaturday).AddMinutes(f.EarliestGameTimeMinuteSaturday).AddMinutes(.GameLengthWindow * x)));
+                                }
+                            }
+                            //else if (currentDate.DayOfWeek == DayOfWeek.Sunday)
+                            //{
+                            //    for (int x = 0; x < l.DailyGamesPerFieldSunday; x++)
+                            //    {
+                            //        possibleUnfilteredTimeSlots.Add(new Tuple<Field, DateTime>(f, currentDate.AddHours(l.EarliestGameTimeHourSunday).AddMinutes(l.EarliestGameTimeMinuteSunday).AddMinutes(l.GameLengthWindow * x)));
+                            //    }
+                            //}
+                            else if (tzi.IsDaylightSavingTime(currentDate))
+                            {
+                                for (int x = 0; x < l.DailyGamesPerFieldWeekday; x++)
+                                {
+                                    possibleUnfilteredTimeSlots.Add(new Tuple<Field, DateTime>(f, currentDate.AddHours(l.EarliestGameTimeHourWeekday).AddMinutes(l.EarliestGameTimeMinuteWeekday).AddMinutes(l.GameLengthWindow * x)));
+                                }
+                            }
+                            currentDate = currentDate.AddDays(1);
+                        }
+                    }
+
+                }
+
+                foreach (League l in leagues)
+                {
+
+                    //Generate Matchings
+                    Dictionary<TeamMatch, int> teamMatchingCount = new Dictionary<TeamMatch, int>();
+
+                    foreach(Team t in l.Teams.OrderBy(_ => rng.Next()))
+                    {
+                        foreach(Team u in l.Teams.OrderBy(_ => rng.Next()))
+                        {
+                            if(t.TeamId != u.TeamId && teamMatchingCount.Keys.Where(s => s.HomeTeamId == t.TeamId && s.AwayTeamId == u.TeamId).Count() == 0)
+                            {
+                                teamMatchingCount.Add(new TeamMatch { HomeTeamId = t.TeamId, AwayTeamId = u.TeamId }, 0);
+                            }
+                        }
+                    }
+
+                    
+                }
+            }
+        }
+
         public static List<Game> GameSchedule(League league = null, Season season = null, Club club = null)
         {
 
@@ -80,6 +166,16 @@ namespace SportsScheduleProLibrary.Services
 
                     }
 
+                    possibleUnfilteredTimeSlots = possibleUnfilteredTimeSlots.OrderByDescending(s => s.Item2.DayOfWeek == DayOfWeekPreference.ToArray()[0]) //Prioritize the game schedules to use the most preferred day of week.  Sunday and week games are very likely if you don't here.
+                                .ThenByDescending(s => s.Item2.DayOfWeek == DayOfWeekPreference.ToArray()[1])
+                                .ThenByDescending(s => s.Item2.DayOfWeek == DayOfWeekPreference.ToArray()[2])
+                                .ThenByDescending(s => s.Item2.DayOfWeek == DayOfWeekPreference.ToArray()[3])
+                                .ThenByDescending(s => s.Item2.DayOfWeek == DayOfWeekPreference.ToArray()[4])
+                                .ThenByDescending(s => s.Item2.DayOfWeek == DayOfWeekPreference.ToArray()[5])
+                                .ThenByDescending(s => s.Item2.DayOfWeek == DayOfWeekPreference.ToArray()[6])
+                                .ThenBy(_ => rng.Next())
+                                .ToList();
+
 
                     //Generate list of matchups excluding 
                     List<Team> teams = l.Teams.ToList().OrderByDescending(s => s.ExcludedGameDates.Count()).OrderBy(_ => rng.Next()).ToList();
@@ -138,7 +234,7 @@ namespace SportsScheduleProLibrary.Services
                                 continue;
 
                             // Add the game and update game counts
-                            if (games.Where(s => s.HomeTeamId == t.TeamId && s.AwayTeamId == id).Count() < l.PlayEachTimeCount)
+                            if (games.Where(s => s.HomeTeamId == t.TeamId && s.AwayTeamId == id).Count() <= l.PlayEachTimeCount)
                             {
                                 games.Add(new Game
                                 {
@@ -218,6 +314,13 @@ namespace SportsScheduleProLibrary.Services
                         }
                     }
 
+                    foreach(var team in teams)
+                    {
+                        if(games.Where(s => s.HomeTeamId == team.TeamId).Count() + games.Where(s => s.AwayTeamId == team.TeamId).Count() != l.GamesPerSeason)
+                        {
+
+                        }
+                    }
 
                     //foreach(Team t in teams)
                     //{
@@ -308,6 +411,12 @@ namespace SportsScheduleProLibrary.Services
                                 .ThenBy(t => dbc.Games.Include(s => s.Field).Where(s => ((s.HomeTeamId == g.HomeTeamId || s.HomeTeamId == g.AwayTeamId) && (s.AwayTeamId == g.AwayTeamId || s.AwayTeamId == g.HomeTeamId)) && t.Item2 > s.ChosenScheduleTime.AddDays(-10) && t.Item2 < s.ChosenScheduleTime.AddDays(10)).Count() > 0) //Make it so the teams don't have to play each other too often.
                                 .ThenByDescending(s => s.Item2.Date >= currentLeagueSeason.StartDate && s.Item2.Date <= ((DateTime)currentLeagueSeason.StartDate).Date.AddDays(8)) //Make sure that the top set of days is included
                                 .ThenByDescending(s => s.Item2.DayOfWeek == DayOfWeekPreference.ToArray()[0]) //Prioritize the game schedules to use the most preferred day of week.  Sunday and week games are very likely if you don't here.
+                                .ThenByDescending(s => s.Item2.DayOfWeek == DayOfWeekPreference.ToArray()[1])
+                                .ThenByDescending(s => s.Item2.DayOfWeek == DayOfWeekPreference.ToArray()[2])
+                                .ThenByDescending(s => s.Item2.DayOfWeek == DayOfWeekPreference.ToArray()[3])
+                                .ThenByDescending(s => s.Item2.DayOfWeek == DayOfWeekPreference.ToArray()[4])
+                                .ThenByDescending(s => s.Item2.DayOfWeek == DayOfWeekPreference.ToArray()[5])
+                                .ThenByDescending(s => s.Item2.DayOfWeek == DayOfWeekPreference.ToArray()[6])
                                 //.ThenBy(_ => rng.Next())
                                 .ToList();
 

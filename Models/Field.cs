@@ -17,6 +17,16 @@ namespace SportsScheduleProLibrary.Models
         public bool IsOpenThursday { get; set; } = true;
         public bool IsOpenFriday { get; set; } = true;
         public bool IsOpenSaturday { get; set; } = true;
+        public int EarliestGameTimeHourSaturday { get; set; } = 8;
+        public int EarliestGameTimeMinuteSaturday { get; set; } = 0;
+        public int EarliestGameTimeHourSunday { get; set; } = 13;
+        public int EarliestGameTimeMinuteSunday { get; set; } = 0;
+        public int EarliestGameTimeHourWeekday { get; set; } = 17;
+        public int EarliestGameTimeMinuteWeekday { get; set; } = 45;
+        public int DailyGamesPerFieldSaturday { get; set; } = 3;
+        public int DailyGamesPerFieldSunday { get; set; } = 1;
+        public int DailyGamesPerFieldWeekday { get; set; } = 1;
+        public int FieldLengthWindow { get; set; } = 90;
 
 
         public bool HasLights { get; set; }
