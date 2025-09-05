@@ -19,17 +19,19 @@ namespace SportsScheduleProLibrary.Services
         public static List<Game> GameScheduleV2(League league = null, Season season = null, Club club = null)
         {
             SportsScheduleProDataContext dbc = new SportsScheduleProDataContext();
-            List<Club> clubs = dbc.Clubs.Include(s => s.Leagues).ThenInclude(s => s.Fields).Include(s => s.Seasons).Include(s => s.Leagues).ThenInclude(s => s.Teams).ThenInclude(s => s.ExcludedGameDates).ToList();
+            List<Club> clubs = dbc.Clubs.Include(s => s.Leagues).ThenInclude(s => s.Fields).Include(s => s.Seasons).Include(s => s.Leagues).ThenInclude(s => s.Teams).ThenInclude(s => s.ExcludedGameDates).Include(s => s.Leagues).ThenInclude(s => s.Teams).ThenInclude(s => s.Coaches).ToList();
             List<Game> games = dbc.Games.ToList();
 
             if (club != null)
                 clubs = new List<Club> { club };
 
             foreach (Club c in clubs)
-            {                    
+            {
                 Random rng = new Random(Guid.NewGuid().GetHashCode() + Environment.TickCount);
                 List<League> leagues = c.Leagues.ToList();
-                List<Field> fieldsForClub = dbc.Fields.Include(s => s.Leagues).OrderBy(_ => rng.Next()).ToList();
+                List<Field> fieldsForClub = dbc.Fields.Include(s => s.Leagues).ToList();
+                fieldsForClub = fieldsForClub.OrderBy(_ => rng.Next()).ToList();
+
                 if (league != null)
                     leagues = new List<League> { league };
 
@@ -40,14 +42,14 @@ namespace SportsScheduleProLibrary.Services
 
 
                 //Generate list of possible times and places
-                if (season.StartDate == null || season.EndDate == null)
+                if (currentLeagueSeason.StartDate == null || currentLeagueSeason.EndDate == null)
                     continue;
                 else
                 {
                     foreach (Field f in fieldsForClub)
                     {
                         DateTime currentDate = (currentLeagueSeason.StartDate ?? DateTime.Now) >= DateTime.Now ? (currentLeagueSeason.StartDate ?? DateTime.Now) : DateTime.Now;
-                        while (currentDate < season.EndDate)
+                        while (currentDate < currentLeagueSeason.EndDate)
                         {
                             if ((currentDate.DayOfWeek == DayOfWeek.Sunday && !f.IsOpenSunday) || (currentDate.DayOfWeek == DayOfWeek.Monday && !f.IsOpenMonday) || (currentDate.DayOfWeek == DayOfWeek.Tuesday && !f.IsOpenTuesday) || (currentDate.DayOfWeek == DayOfWeek.Wednesday && !f.IsOpenWednesday) || (currentDate.DayOfWeek == DayOfWeek.Thursday && !f.IsOpenThursday) || (currentDate.DayOfWeek == DayOfWeek.Friday && !f.IsOpenFriday) || (currentDate.DayOfWeek == DayOfWeek.Saturday && !f.IsOpenSaturday))
                                 continue;
@@ -56,7 +58,7 @@ namespace SportsScheduleProLibrary.Services
                             {
                                 for (int x = 0; x < f.DailyGamesPerFieldSaturday; x++)
                                 {
-                                    possibleUnfilteredTimeSlots.Add(new Tuple<Field, DateTime>(f, currentDate.AddHours(f.EarliestGameTimeHourSaturday).AddMinutes(f.EarliestGameTimeMinuteSaturday).AddMinutes(.GameLengthWindow * x)));
+                                    possibleUnfilteredTimeSlots.Add(new Tuple<Field, DateTime>(f, currentDate.AddHours(f.EarliestGameTimeHourSaturday).AddMinutes(f.EarliestGameTimeMinuteSaturday).AddMinutes(f.FieldGameLengthWindow * x)));
                                 }
                             }
                             //else if (currentDate.DayOfWeek == DayOfWeek.Sunday)
@@ -68,9 +70,9 @@ namespace SportsScheduleProLibrary.Services
                             //}
                             else if (tzi.IsDaylightSavingTime(currentDate))
                             {
-                                for (int x = 0; x < l.DailyGamesPerFieldWeekday; x++)
+                                for (int x = 0; x < f.DailyGamesPerFieldWeekday; x++)
                                 {
-                                    possibleUnfilteredTimeSlots.Add(new Tuple<Field, DateTime>(f, currentDate.AddHours(l.EarliestGameTimeHourWeekday).AddMinutes(l.EarliestGameTimeMinuteWeekday).AddMinutes(l.GameLengthWindow * x)));
+                                    possibleUnfilteredTimeSlots.Add(new Tuple<Field, DateTime>(f, currentDate.AddHours(f.EarliestGameTimeHourWeekday).AddMinutes(f.EarliestGameTimeMinuteWeekday).AddMinutes(f.FieldGameLengthWindow * x)));
                                 }
                             }
                             currentDate = currentDate.AddDays(1);
@@ -85,20 +87,145 @@ namespace SportsScheduleProLibrary.Services
                     //Generate Matchings
                     Dictionary<TeamMatch, int> teamMatchingCount = new Dictionary<TeamMatch, int>();
 
-                    foreach(Team t in l.Teams.OrderBy(_ => rng.Next()))
+                    foreach (Team t in l.Teams.OrderBy(_ => rng.Next()))
                     {
-                        foreach(Team u in l.Teams.OrderBy(_ => rng.Next()))
+                        foreach (Team u in l.Teams.OrderBy(_ => rng.Next()))
                         {
-                            if(t.TeamId != u.TeamId && teamMatchingCount.Keys.Where(s => s.HomeTeamId == t.TeamId && s.AwayTeamId == u.TeamId).Count() == 0)
+                            if (t.TeamId != u.TeamId && teamMatchingCount.Keys.Where(s => s.HomeTeamId == t.TeamId && s.AwayTeamId == u.TeamId).Count() == 0 && teamMatchingCount.Keys.Where(s => s.HomeTeamId == u.TeamId && s.AwayTeamId == t.TeamId).Count() == 0)
                             {
-                                teamMatchingCount.Add(new TeamMatch { HomeTeamId = t.TeamId, AwayTeamId = u.TeamId }, 0);
+                                teamMatchingCount.Add(new TeamMatch { HomeTeamId = t.TeamId, AwayTeamId = u.TeamId, Home = t, Away = u }, 0);
                             }
                         }
                     }
 
-                    
+                    foreach(Game g in dbc.Games.Include(s => s.League).Include(s => s.Field).Where(s => s.League == l))
+                    {
+                        teamMatchingCount[teamMatchingCount.Where(s => s.Key.HomeTeamId == g.HomeTeamId && s.Key.AwayTeamId == g.AwayTeamId || s.Key.AwayTeamId == g.HomeTeamId && s.Key.HomeTeamId == g.AwayTeamId).First().Key]++;
+                        Tuple<Field, DateTime> taken = possibleUnfilteredTimeSlots.Where(s => s.Item1.FieldId == g.Field.FieldId && s.Item2 == g.ChosenScheduleTime).FirstOrDefault();
+                        possibleUnfilteredTimeSlots.Remove(taken);
+                    }
+
+                    foreach (Team t in l.Teams)
+                    {
+                        while (teamMatchingCount.Where(s => s.Key.HomeTeamId == t.TeamId || s.Key.AwayTeamId == t.TeamId).Sum(s => s.Value) < l.GamesPerSeason)
+                        {
+                            TeamMatch tm = teamMatchingCount.Where(s => s.Key.AwayTeamId == t.TeamId || s.Key.HomeTeamId == t.TeamId).OrderBy(s => s.Value).ThenBy(_ => rng.Next()).First().Key;
+                            if((teamMatchingCount.Where(s => s.Key.AwayTeamId == t.TeamId && s.Key.HomeTeamId == tm.HomeTeamId).FirstOrDefault().Value) + (teamMatchingCount.Where(s => s.Key.HomeTeamId == t.TeamId && s.Key.AwayTeamId == tm.AwayTeamId).FirstOrDefault().Value) > l.PlayEachTimeCount)
+                                tm = teamMatchingCount.Where(s => s.Key.AwayTeamId == t.TeamId).OrderBy(s => s.Value).ThenBy(_ => rng.Next()).First().Key;
+
+                            if (teamMatchingCount.Where(s => s.Key.HomeTeamId == t.TeamId || s.Key.AwayTeamId == t.TeamId).Sum(s => s.Value) >= l.GamesPerSeason)
+                                continue;
+                            Tuple<Field, DateTime> timeSlot = possibleUnfilteredTimeSlots.Where(s => t.League.Fields.Contains(s.Item1) && CheckCoachAvailable(s, tm.AwayTeamId, tm.HomeTeamId)).OrderByDescending(s => s.Item2.DayOfWeek == DayOfWeekPreference.ToArray()[0]) //Prioritize the game schedules to use the most preferred day of week
+                                .ThenByDescending(s => s.Item2.DayOfWeek == DayOfWeekPreference.ToArray()[1])
+                                .ThenByDescending(s => s.Item2.DayOfWeek == DayOfWeekPreference.ToArray()[2])
+                                .ThenByDescending(s => s.Item2.DayOfWeek == DayOfWeekPreference.ToArray()[3])
+                                .ThenByDescending(s => s.Item2.DayOfWeek == DayOfWeekPreference.ToArray()[4])
+                                .ThenByDescending(s => s.Item2.DayOfWeek == DayOfWeekPreference.ToArray()[5])
+                                .ThenByDescending(s => s.Item2.DayOfWeek == DayOfWeekPreference.ToArray()[6])
+                                .ThenBy(_ => rng.Next())
+                                .FirstOrDefault();
+
+                            if (teamMatchingCount.Where(s => s.Key.HomeTeamId == tm.HomeTeamId || s.Key.AwayTeamId == tm.HomeTeamId).Sum(s => s.Value) >= 8)
+                            {
+                                continue;
+                            }
+                            else if (teamMatchingCount.Where(s => s.Key.HomeTeamId == tm.AwayTeamId || s.Key.AwayTeamId == tm.AwayTeamId).Sum(s => s.Value) >= 8)
+                            {
+                                continue;
+                            }
+
+                            if (dbc.Games.Where(s => s.HomeTeamId == t.TeamId || s.AwayTeamId == t.TeamId).Count() > l.GamesPerSeason || (dbc.Games.Where(s => s.HomeTeamId == tm.HomeTeamId || s.AwayTeamId == tm.HomeTeamId).Count() > l.GamesPerSeason) || (dbc.Games.Where(s => s.HomeTeamId == tm.AwayTeamId || s.AwayTeamId == tm.AwayTeamId).Count() > l.GamesPerSeason))
+                            {
+                                if (l.Teams.IndexOf(t) == l.Teams.Count() - 1)
+                                { 
+                                    
+                                }
+                                else
+                                    continue;
+                            }
+
+                            dbc.Games.Add(new Game
+                            {
+                                AwayTeamId = tm.AwayTeamId,
+                                ChosenScheduleTime = timeSlot.Item2,
+                                HomeTeamId = tm.HomeTeamId,
+                                Field = timeSlot.Item1,
+                                League = l,
+                            });
+                            teamMatchingCount[tm]++;
+                            possibleUnfilteredTimeSlots.Remove(timeSlot);
+                            //teamMatchingCount[teamMatchingCount.Keys.Where(s => s.AwayTeamId == tm.HomeTeamId && s.HomeTeamId == tm.AwayTeamId).First()]++;
+
+                            dbc.SaveChanges();
+                            //dbc.Entry(t).Reload();
+                        }
+                    }
+                    dbc.SaveChanges();
                 }
             }
+            return dbc.Games.ToList();
+        }
+
+        private static bool CheckCoachAvailable(Tuple<Field, DateTime> startTime, int taId, int thId)
+        {
+            SportsScheduleProDataContext dbc = new SportsScheduleProDataContext();
+
+            //Team away = dbc.Teams.Include(s => s.Coaches).FirstOrDefault(s => s.TeamId == taId);
+            //Team home = dbc.Teams.Include(s => s.Coaches).FirstOrDefault(s => s.TeamId == thId);
+
+            //List<Coach> awayCoach = dbc.Coaches.Where(s => s.Teams.Contains(away)).ToList();
+            //List<Coach> homeCoach = dbc.Coaches.Where(s => s.Teams.Contains(home)).ToList();
+
+            //List<Coach> coachesInvolved = new List<Coach>();
+            //coachesInvolved.AddRange(awayCoach);
+            //coachesInvolved.AddRange(homeCoach);
+
+            List<Game> games = new List<Game>();
+            //List<Team> allTeams = new List<Team>();
+            List<ExcludedGameDate> excluded = new List<ExcludedGameDate>();
+
+            foreach (ExcludedGameDate egd in excluded) //bool overlap = a.start < b.end && b.start < a.end;
+            {
+                if (egd.ExcludedTimeEnd == null && egd.ExcludedTimeStart == null) //Date Only Restriction
+                {
+                    if (startTime.Item2.Date == egd.ExcludedDate)
+                        return false;
+                }
+                else if (egd.ExcludedTimeStart != null && egd.ExcludedTimeEnd == null) //Weird state, but since it's a start with no end then only allow games before and ending before this time
+                {
+                    if (startTime.Item2.Date == egd.ExcludedDate && startTime.Item2 >= egd.ExcludedDate.AddTicks(egd.ExcludedTimeStart.Value.Ticks))
+                        return false;
+                }
+                else if (egd.ExcludedTimeStart == null && egd.ExcludedTimeEnd != null) //Another weird state.  Only allow games after or at the selected time
+                {
+                    if (startTime.Item2.Date == egd.ExcludedDate && startTime.Item2 <= egd.ExcludedDate.AddTicks(egd.ExcludedTimeEnd.Value.Ticks))
+                        return false;
+                }
+                else if (egd.ExcludedTimeStart != null && egd.ExcludedTimeEnd != null) //Time restrictions that take out a section of a day
+                {
+                    if (startTime.Item2.Date < egd.ExcludedDate.AddMinutes(startTime.Item1.FieldGameLengthWindow) && egd.ExcludedDate < startTime.Item2.AddMinutes(startTime.Item1.FieldGameLengthWindow))
+                        return false;
+                }
+            }
+
+            games = dbc.Games.FromSqlRaw(@"select g.* from Game g
+                                           join Team away on away.TeamId = {0}
+                                           join Team home on home.TeamId = {1}
+                                           join CoachTeam ct on ct.TeamsTeamId = away.TeamId or ct.TeamsTeamId = home.TeamId", taId, thId).ToList();
+
+            //foreach (Coach coach in coachesInvolved)
+            //{
+            //    allTeams.AddRange(coach.Teams);
+            //}
+
+            //foreach(Team team in allTeams)
+            //{
+            //    games.AddRange(team.Games);
+            //}
+
+            //bool overlap = a.start < b.end && b.start < a.end;
+
+            return games.Count(s => startTime.Item2 < s.ChosenScheduleTime.AddMinutes(startTime.Item1.FieldGameLengthWindow) && s.ChosenScheduleTime < startTime.Item2.AddMinutes(startTime.Item1.FieldGameLengthWindow)) == 0;
         }
 
         public static List<Game> GameSchedule(League league = null, Season season = null, Club club = null)

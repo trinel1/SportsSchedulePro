@@ -26,7 +26,7 @@ namespace SportsScheduleProLibrary.Models
         public int DailyGamesPerFieldSaturday { get; set; } = 3;
         public int DailyGamesPerFieldSunday { get; set; } = 1;
         public int DailyGamesPerFieldWeekday { get; set; } = 1;
-        public int FieldLengthWindow { get; set; } = 90;
+        public int FieldGameLengthWindow { get; set; } = 90;
 
 
         public bool HasLights { get; set; }

@@ -10,5 +10,7 @@ namespace SportsScheduleProLibrary.Models
     {
         public int HomeTeamId { get; set; }
         public int AwayTeamId { get; set; }
+        public Team Home { get; set; }
+        public Team Away { get; set; }
     }
 }
