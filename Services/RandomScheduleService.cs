@@ -49,7 +49,7 @@ namespace SportsScheduleProLibrary.Services
                     foreach (Field f in fieldsForClub)
                     {
                         DateTime currentDate = (currentLeagueSeason.StartDate ?? DateTime.Now) >= DateTime.Now ? (currentLeagueSeason.StartDate ?? DateTime.Now) : DateTime.Now;
-                        while (currentDate < currentLeagueSeason.EndDate)
+                        while (currentDate <= currentLeagueSeason.EndDate)
                         {
                             if ((currentDate.DayOfWeek == DayOfWeek.Sunday && !f.IsOpenSunday) || (currentDate.DayOfWeek == DayOfWeek.Monday && !f.IsOpenMonday) || (currentDate.DayOfWeek == DayOfWeek.Tuesday && !f.IsOpenTuesday) || (currentDate.DayOfWeek == DayOfWeek.Wednesday && !f.IsOpenWednesday) || (currentDate.DayOfWeek == DayOfWeek.Thursday && !f.IsOpenThursday) || (currentDate.DayOfWeek == DayOfWeek.Friday && !f.IsOpenFriday) || (currentDate.DayOfWeek == DayOfWeek.Saturday && !f.IsOpenSaturday))
                             {
